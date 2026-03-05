@@ -182,7 +182,7 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
   return (
     <div className="bg-card border border-border rounded-xl p-4">
       {/* Title */}
-      <h3 className="text-lg font-bold text-center mb-3">de Eventos</h3>
+      <h3 className="text-lg font-bold text-center mb-3">Calendário de Eventos</h3>
 
       {/* View Mode Tabs */}
       <div className="flex justify-center gap-2 mb-4">
