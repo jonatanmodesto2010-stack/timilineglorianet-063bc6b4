@@ -5,7 +5,7 @@ export const BUILD_VERSION = import.meta.env.VITE_BUILD_VERSION || 'dev';
 export const BUILD_TIME = import.meta.env.VITE_BUILD_TIME || new Date().toISOString();
 export const FULL_VERSION = `${APP_VERSION}-${BUILD_VERSION}`;
 
-export const APP_NAME = 'Sistema de Gestão ISP';
+export const APP_NAME = 'Cobra Fácil';
 export const APP_YEAR = new Date().getFullYear();
 
 export const getFullVersion = () => {

@@ -86,7 +86,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
         >
-          Time Line - ISP Manager
+          Cobra
         </motion.h1>
       </div>
 
