@@ -44,6 +44,47 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          organization_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          organization_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          organization_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_analysis_history: {
         Row: {
           analysis_data: Json
@@ -86,6 +127,7 @@ export type Database = {
           description: string | null
           due_date: string
           id: string
+          ixc_boleto_id: string | null
           status: string
           timeline_id: string
           updated_at: string | null
@@ -96,6 +138,7 @@ export type Database = {
           description?: string | null
           due_date: string
           id?: string
+          ixc_boleto_id?: string | null
           status?: string
           timeline_id: string
           updated_at?: string | null
@@ -106,6 +149,7 @@ export type Database = {
           description?: string | null
           due_date?: string
           id?: string
+          ixc_boleto_id?: string | null
           status?: string
           timeline_id?: string
           updated_at?: string | null
@@ -222,6 +266,59 @@ export type Database = {
           },
         ]
       }
+      integration_sync_log: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          organization_id: string
+          records_created: number | null
+          records_processed: number | null
+          records_updated: number | null
+          started_at: string | null
+          status: string
+          sync_type: string
+          total_records: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          records_created?: number | null
+          records_processed?: number | null
+          records_updated?: number | null
+          started_at?: string | null
+          status?: string
+          sync_type: string
+          total_records?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          records_created?: number | null
+          records_processed?: number | null
+          records_updated?: number | null
+          started_at?: string | null
+          status?: string
+          sync_type?: string
+          total_records?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_sync_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_filters: {
         Row: {
           filter_data: Json
@@ -253,6 +350,85 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organization_filters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_icons: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          icon: string
+          id: string
+          label: string | null
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          icon: string
+          id?: string
+          label?: string | null
+          organization_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          icon?: string
+          id?: string
+          label?: string | null
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_icons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_integrations: {
+        Row: {
+          api_token: string | null
+          api_url: string | null
+          api_url_contracts: string | null
+          created_at: string | null
+          id: string
+          integration_type: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_token?: string | null
+          api_url?: string | null
+          api_url_contracts?: string | null
+          created_at?: string | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_token?: string | null
+          api_url?: string | null
+          api_url_contracts?: string | null
+          created_at?: string | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_integrations_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -454,6 +630,30 @@ export type Database = {
           },
         ]
       }
+      user_preferences: {
+        Row: {
+          id: string
+          preference_key: string
+          preference_value: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          preference_key: string
+          preference_value: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          preference_key?: string
+          preference_value?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -506,6 +706,24 @@ export type Database = {
         }
         Returns: undefined
       }
+      batch_upsert_boletos: {
+        Args: {
+          p_dates: string[]
+          p_ids: string[]
+          p_statuses: string[]
+          p_values: number[]
+        }
+        Returns: undefined
+      }
+      batch_upsert_clients: {
+        Args: {
+          p_active: boolean[]
+          p_ids: string[]
+          p_names: string[]
+          p_statuses: string[]
+        }
+        Returns: undefined
+      }
       generate_client_sequential_id: {
         Args: { org_id: string }
         Returns: string
@@ -522,10 +740,7 @@ export type Database = {
           user_role_id: string
         }[]
       }
-      get_user_organization: {
-        Args: { _user_id: string }
-        Returns: string
-      }
+      get_user_organization: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -533,10 +748,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_super_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       user_in_organization: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
