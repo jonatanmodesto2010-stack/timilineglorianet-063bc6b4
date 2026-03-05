@@ -117,8 +117,8 @@ export function sortClients(
     const pb = groupPriority(b);
     if (pa !== pb) return pa - pb;
 
-    // Within overdue group, sort by most days overdue (desc)
-    if (pa === 1) {
+    // Within blocked or overdue groups, sort by most days overdue (desc)
+    if (pa === 0 || pa === 1) {
       const daysA = overdueDaysMap.get(a.primaryTimeline.id) || 0;
       const daysB = overdueDaysMap.get(b.primaryTimeline.id) || 0;
       if (daysA !== daysB) return daysB - daysA;
