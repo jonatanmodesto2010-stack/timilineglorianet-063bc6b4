@@ -10,6 +10,7 @@ import { TagsManagement } from '@/components/settings/TagsManagement';
 import { IconsManagement } from '@/components/settings/IconsManagement';
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
 import { HistorySettings } from '@/components/settings/HistorySettings';
+import { ColorThemeSettings } from '@/components/settings/ColorThemeSettings';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 
