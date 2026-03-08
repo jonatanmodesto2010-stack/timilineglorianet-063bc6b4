@@ -1,19 +1,26 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, CheckCircle, AlertTriangle, Clock, DollarSign, TrendingUp } from 'lucide-react';
+import { Users, CheckCircle, AlertTriangle, Clock, DollarSign, TrendingUp, TrendingDown, BarChart3, PieChart } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { fetchAllPaginated, fetchInChunks } from '@/lib/supabase-helpers';
-import { groupTimelinesByClient, calculateOverdueDays, type ClientTimeline } from '@/lib/client-utils';
+import { groupTimelinesByClient, type ClientTimeline } from '@/lib/client-utils';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RechartsPie, Pie } from 'recharts';
+
+interface BoletoData {
+  timeline_id: string;
+  due_date: string;
+  status: string;
+  boleto_value: number;
+}
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [allTimelines, setAllTimelines] = useState<ClientTimeline[]>([]);
-  const [totalOverdueValue, setTotalOverdueValue] = useState(0);
-  const [totalOverdueBoletos, setTotalOverdueBoletos] = useState(0);
+  const [boletos, setBoletos] = useState<BoletoData[]>([]);
   const [loading, setLoading] = useState(true);
   const { organizationId } = useUserRole();
   const navigate = useNavigate();
@@ -38,25 +45,10 @@ const Dashboard = () => {
       });
       setAllTimelines(data || []);
 
-      // Load overdue boletos info
       const timelineIds = (data || []).map((t: any) => t.id);
       if (timelineIds.length > 0) {
-        const boletos = await fetchInChunks('client_boletos', 'timeline_id', timelineIds, 'timeline_id, due_date, status, boleto_value');
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        let overdueVal = 0;
-        let overdueCount = 0;
-        for (const b of boletos) {
-          if (b.status === 'pago' || b.status === 'cancelado') continue;
-          const dueDate = new Date(b.due_date);
-          dueDate.setHours(0, 0, 0, 0);
-          if (today.getTime() > dueDate.getTime()) {
-            overdueVal += Number(b.boleto_value) || 0;
-            overdueCount++;
-          }
-        }
-        setTotalOverdueValue(overdueVal);
-        setTotalOverdueBoletos(overdueCount);
+        const boletosData = await fetchInChunks('client_boletos', 'timeline_id', timelineIds, 'timeline_id, due_date, status, boleto_value');
+        setBoletos(boletosData || []);
       }
     } catch (err) {
       console.error('Dashboard load error:', err);
@@ -65,27 +57,103 @@ const Dashboard = () => {
     }
   };
 
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
   const stats = useMemo(() => {
     const grouped = groupTimelinesByClient(allTimelines);
     const total = grouped.length;
     const active = grouped.filter(c => c.is_active && c.status === 'active').length;
     const blocked = grouped.filter(c => !c.is_active && c.status !== 'archived' && c.status !== 'completed').length;
     const completed = grouped.filter(c => c.status === 'completed').length;
+    const archived = grouped.filter(c => c.status === 'archived').length;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Boleto calculations
+    const pendingBoletos = boletos.filter(b => b.status !== 'pago' && b.status !== 'cancelado');
+    const overdueBoletos = pendingBoletos.filter(b => {
+      const d = new Date(b.due_date); d.setHours(0, 0, 0, 0);
+      return today.getTime() > d.getTime();
+    });
+    const upcomingBoletos = pendingBoletos.filter(b => {
+      const d = new Date(b.due_date); d.setHours(0, 0, 0, 0);
+      return today.getTime() <= d.getTime();
+    });
+
+    const totalOverdueValue = overdueBoletos.reduce((s, b) => s + (Number(b.boleto_value) || 0), 0);
+    const totalUpcomingValue = upcomingBoletos.reduce((s, b) => s + (Number(b.boleto_value) || 0), 0);
+    const totalReceivable = totalOverdueValue + totalUpcomingValue;
+    const paidBoletos = boletos.filter(b => b.status === 'pago');
+    const totalPaidValue = paidBoletos.reduce((s, b) => s + (Number(b.boleto_value) || 0), 0);
+
+    // Delinquency rate
+    const timelinesWithOverdue = new Set(overdueBoletos.map(b => b.timeline_id));
+    const delinquencyRate = active > 0 ? Math.round((timelinesWithOverdue.size / active) * 100) : 0;
+
+    // Aging buckets
+    const aging = { '1-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+    const agingCount = { '1-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+    for (const b of overdueBoletos) {
+      const d = new Date(b.due_date); d.setHours(0, 0, 0, 0);
+      const days = Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+      const val = Number(b.boleto_value) || 0;
+      if (days <= 30) { aging['1-30'] += val; agingCount['1-30']++; }
+      else if (days <= 60) { aging['31-60'] += val; agingCount['31-60']++; }
+      else if (days <= 90) { aging['61-90'] += val; agingCount['61-90']++; }
+      else { aging['90+'] += val; agingCount['90+']++; }
+    }
+
+    // Average overdue days
+    let totalOverdueDays = 0;
+    for (const b of overdueBoletos) {
+      const d = new Date(b.due_date); d.setHours(0, 0, 0, 0);
+      totalOverdueDays += Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+    }
+    const avgOverdueDays = overdueBoletos.length > 0 ? Math.round(totalOverdueDays / overdueBoletos.length) : 0;
+
+    // Block rate
     const blockRate = total > 0 ? Math.round((blocked / total) * 100) : 0;
-    return { total, active, blocked, completed, blockRate };
-  }, [allTimelines]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
+    return {
+      total, active, blocked, completed, archived,
+      totalOverdueValue, totalUpcomingValue, totalReceivable, totalPaidValue,
+      overdueBoletoCount: overdueBoletos.length,
+      upcomingBoletoCount: upcomingBoletos.length,
+      delinquencyRate, avgOverdueDays, blockRate,
+      aging, agingCount,
+    };
+  }, [allTimelines, boletos]);
 
-  const cards = [
-    { label: 'Total de Clientes', value: stats.total, sub: 'clientes únicos', icon: Users, color: 'text-foreground' },
-    { label: 'Clientes Ativos', value: stats.active, sub: 'em cobrança ativa', icon: CheckCircle, color: 'text-green-500' },
-    { label: 'Bloqueados', value: stats.blocked, sub: 'clientes bloqueados', icon: AlertTriangle, color: 'text-red-500' },
-    { label: 'Finalizados', value: stats.completed, sub: 'cobranças finalizadas', icon: Clock, color: 'text-foreground' },
-    { label: 'Valor em Atraso', value: formatCurrency(totalOverdueValue), sub: `${totalOverdueBoletos} boletos vencidos`, icon: DollarSign, color: 'text-red-500', isText: true },
-    { label: 'Taxa de Bloqueio', value: `${stats.blockRate}%`, sub: 'dos clientes bloqueados', icon: TrendingUp, color: 'text-foreground', isText: true },
+  const agingChartData = [
+    { name: '1-30d', value: stats.aging['1-30'], count: stats.agingCount['1-30'], fill: 'hsl(48 96% 53%)' },
+    { name: '31-60d', value: stats.aging['31-60'], count: stats.agingCount['31-60'], fill: 'hsl(25 95% 53%)' },
+    { name: '61-90d', value: stats.aging['61-90'], count: stats.agingCount['61-90'], fill: 'hsl(0 72% 50%)' },
+    { name: '90d+', value: stats.aging['90+'], count: stats.agingCount['90+'], fill: 'hsl(0 72% 35%)' },
+  ];
+
+  const statusPieData = [
+    { name: 'Ativos', value: stats.active, fill: 'hsl(134 61% 41%)' },
+    { name: 'Bloqueados', value: stats.blocked, fill: 'hsl(0 72% 50%)' },
+    { name: 'Inativos', value: stats.archived, fill: 'hsl(240 5% 50%)' },
+    { name: 'Finalizados', value: stats.completed, fill: 'hsl(200 80% 50%)' },
+  ].filter(d => d.value > 0);
+
+  const kpiCards = [
+    { label: 'Total a Receber', value: formatCurrency(stats.totalReceivable), sub: `${stats.overdueBoletoCount + stats.upcomingBoletoCount} boletos pendentes`, icon: DollarSign, color: 'text-primary' },
+    { label: 'Valor em Atraso', value: formatCurrency(stats.totalOverdueValue), sub: `${stats.overdueBoletoCount} boletos vencidos`, icon: TrendingDown, color: 'text-destructive' },
+    { label: 'A Vencer', value: formatCurrency(stats.totalUpcomingValue), sub: `${stats.upcomingBoletoCount} boletos`, icon: Clock, color: 'text-foreground' },
+    { label: 'Recebido', value: formatCurrency(stats.totalPaidValue), sub: `boletos pagos`, icon: TrendingUp, color: 'hsl(134,61%,41%)' },
+    { label: 'Taxa Inadimplência', value: `${stats.delinquencyRate}%`, sub: 'clientes com boletos vencidos', icon: AlertTriangle, color: stats.delinquencyRate > 30 ? 'text-destructive' : 'text-foreground' },
+    { label: 'Média Dias Atraso', value: `${stats.avgOverdueDays}d`, sub: 'tempo médio de atraso', icon: BarChart3, color: 'text-foreground' },
+  ];
+
+  const summaryCards = [
+    { label: 'Total Clientes', value: stats.total, icon: Users, color: 'text-foreground' },
+    { label: 'Ativos', value: stats.active, icon: CheckCircle, color: 'text-green-500' },
+    { label: 'Bloqueados', value: stats.blocked, icon: AlertTriangle, color: 'text-destructive' },
+    { label: 'Taxa Bloqueio', value: `${stats.blockRate}%`, icon: TrendingDown, color: 'text-foreground' },
   ];
 
   return (
@@ -94,39 +162,181 @@ const Dashboard = () => {
       <div className="flex flex-1 w-full">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto space-y-6">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-              <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-              <p className="text-muted-foreground mb-6">Visão geral da organização</p>
+              <h2 className="text-2xl font-bold text-foreground">Dashboard de Cobrança</h2>
+              <p className="text-muted-foreground">Visão geral financeira e métricas de cobrança</p>
             </motion.div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-32 bg-muted animate-pulse rounded-xl" />
-                ))}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="h-28 bg-muted animate-pulse rounded-xl" />
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="h-80 bg-muted animate-pulse rounded-xl" />
+                  <div className="h-80 bg-muted animate-pulse rounded-xl" />
+                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {cards.map((card, i) => (
+              <>
+                {/* KPI Cards - Financial */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {kpiCards.map((card, i) => (
+                    <motion.div
+                      key={card.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="bg-card border border-border rounded-xl p-5"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{card.label}</span>
+                        <card.icon size={18} className="text-muted-foreground" />
+                      </div>
+                      <div className={`text-2xl font-bold ${card.color}`}>{card.value}</div>
+                      <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Aging Chart */}
                   <motion.div
-                    key={card.label}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="bg-card border border-border rounded-xl p-6"
+                    transition={{ delay: 0.3 }}
+                    className="bg-card border border-border rounded-xl p-5"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground font-medium">{card.label}</span>
-                      <card.icon size={20} className="text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <BarChart3 size={16} />
+                      Aging de Inadimplência
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4">Valor em atraso por faixa de dias</p>
+                    {agingChartData.some(d => d.value > 0) ? (
+                      <ResponsiveContainer width="100%" height={240}>
+                        <BarChart data={agingChartData} barSize={40}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                          <YAxis 
+                            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                          />
+                          <Tooltip
+                            formatter={(value: number, name: string) => [
+                              new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value),
+                              'Valor'
+                            ]}
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              fontSize: '12px'
+                            }}
+                          />
+                          <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                            {agingChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-60 flex items-center justify-center text-muted-foreground text-sm">
+                        Nenhum boleto em atraso 🎉
+                      </div>
+                    )}
+                    {/* Aging legend */}
+                    <div className="grid grid-cols-4 gap-2 mt-3">
+                      {agingChartData.map(d => (
+                        <div key={d.name} className="text-center">
+                          <div className="text-xs text-muted-foreground">{d.name}</div>
+                          <div className="text-xs font-semibold text-foreground">{d.count} boletos</div>
+                        </div>
+                      ))}
                     </div>
-                    <div className={`text-3xl font-bold ${card.color}`}>
-                      {card.value}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
                   </motion.div>
-                ))}
-              </div>
+
+                  {/* Status Pie Chart */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
+                    className="bg-card border border-border rounded-xl p-5"
+                  >
+                    <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <PieChart size={16} />
+                      Distribuição de Clientes
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4">Segmentação por status</p>
+                    {statusPieData.length > 0 ? (
+                      <div className="flex items-center gap-4">
+                        <ResponsiveContainer width="60%" height={220}>
+                          <RechartsPie>
+                            <Pie
+                              data={statusPieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={50}
+                              outerRadius={85}
+                              paddingAngle={3}
+                              dataKey="value"
+                            >
+                              {statusPieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value: number) => [value, 'Clientes']}
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: '12px'
+                              }}
+                            />
+                          </RechartsPie>
+                        </ResponsiveContainer>
+                        <div className="flex-1 space-y-3">
+                          {statusPieData.map(d => (
+                            <div key={d.name} className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.fill }} />
+                              <span className="text-xs text-muted-foreground">{d.name}</span>
+                              <span className="text-xs font-semibold text-foreground ml-auto">{d.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-60 flex items-center justify-center text-muted-foreground text-sm">
+                        Nenhum cliente cadastrado
+                      </div>
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {summaryCards.map((card, i) => (
+                    <motion.div
+                      key={card.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + i * 0.05 }}
+                      className="bg-card border border-border rounded-xl p-4"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <card.icon size={14} className="text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{card.label}</span>
+                      </div>
+                      <div className={`text-xl font-bold ${card.color}`}>{card.value}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </main>
