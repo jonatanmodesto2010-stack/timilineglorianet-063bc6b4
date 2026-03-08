@@ -367,6 +367,14 @@ export const IntegrationsSettings = () => {
                   {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
                   Sincronizar Boletos
                 </Button>
+                <Button
+                  variant="outline"
+                  disabled={isSyncing}
+                  onClick={() => startSync('sync_areceber')}
+                >
+                  {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
+                  Contas a Receber
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground">A sincronização automática ocorre a cada 10 minutos via cron. Inclui descoberta de clientes via contratos.</p>
             </div>
