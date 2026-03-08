@@ -9,6 +9,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { fetchAllPaginated, fetchInChunks } from '@/lib/supabase-helpers';
 import { groupTimelinesByClient, type ClientTimeline } from '@/lib/client-utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RechartsPie, Pie } from 'recharts';
+import { ClientPriorityList } from '@/components/ClientPriorityList';
 
 interface BoletoData {
   timeline_id: string;
