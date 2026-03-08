@@ -38,9 +38,27 @@ const SECTIONS = [
 
 const Manual = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { canManageUsers, canManageSettings, isLoading } = useUserRole();
   const { isSuperAdmin } = useSuperAdmin();
   const navigate = useNavigate();
+
+  const filteredSections = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim();
+    return SECTIONS.filter(s => {
+      // Check role restrictions
+      if (s.restricted === 'admin' && !canManageSettings) return false;
+      if (s.restricted === 'superadmin' && !isSuperAdmin) return false;
+      // Check search
+      if (!term) return true;
+      return s.title.toLowerCase().includes(term) || s.keywords.includes(term);
+    });
+  }, [searchTerm, canManageSettings, isSuperAdmin]);
+
+  const openValues = useMemo(() => {
+    if (!searchTerm.trim()) return ['visao-geral'];
+    return filteredSections.map(s => s.value);
+  }, [searchTerm, filteredSections]);
 
   useEffect(() => {
     const checkAuth = async () => {
