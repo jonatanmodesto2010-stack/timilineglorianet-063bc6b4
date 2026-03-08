@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.admin-create-organization]
 verify_jwt = false
+
+[functions.ixc-check-online]
+verify_jwt = false
