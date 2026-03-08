@@ -43,6 +43,7 @@ const Clients = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [filialFilter, setFilialFilter] = useState('all');
   const navigate = useNavigate();
   const { toast } = useToast();
 
