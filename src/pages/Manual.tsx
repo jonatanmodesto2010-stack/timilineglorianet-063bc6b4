@@ -62,6 +62,8 @@ const Manual = () => {
     return filteredSections.map(s => s.value);
   }, [searchTerm, filteredSections]);
 
+  const isVisible = (value: string) => filteredSections.some(s => s.value === value);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
