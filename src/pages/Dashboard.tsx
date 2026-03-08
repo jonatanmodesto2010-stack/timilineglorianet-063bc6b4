@@ -339,6 +339,7 @@ const Dashboard = () => {
                   ))}
                 </div>
 
+                <CollectionActionsWidget />
                 <ClientPriorityList timelines={allTimelines} boletos={boletos} />
               </>
             )}
