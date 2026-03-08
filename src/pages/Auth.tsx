@@ -301,7 +301,6 @@ const Auth = () => {
                   type="button"
                   onClick={() => {
                     setIsForgotPassword(false);
-                    setIsLogin(true);
                     setErrors({});
                   }}
                   className="text-sm text-primary hover:underline"
