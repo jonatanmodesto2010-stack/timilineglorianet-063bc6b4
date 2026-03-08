@@ -206,10 +206,10 @@ const Manual = () => {
                   <li><strong>Reativar:</strong> Volta um cliente concluído/arquivado para ativo</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* TIMELINE */}
-            <AccordionItem value="timeline" className="border rounded-lg px-4">
+            {isVisible('timeline') && <AccordionItem value="timeline" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-primary" />
