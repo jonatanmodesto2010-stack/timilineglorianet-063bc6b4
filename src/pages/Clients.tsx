@@ -112,6 +112,17 @@ const Clients = () => {
     }
   };
 
+  // Extract unique filiais
+  const filiais = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of allTimelines) {
+      if (t.ixc_filial_id && t.ixc_filial_name) {
+        map.set(t.ixc_filial_id, t.ixc_filial_name);
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [allTimelines]);
+
   // Group and sort clients
   const groupedClients = useMemo(() => {
     const grouped = groupTimelinesByClient(allTimelines);
