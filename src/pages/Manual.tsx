@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { exportManualPDF } from '@/lib/manual-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -17,7 +19,7 @@ import {
   Users, Calendar, LayoutDashboard, BarChart3, Settings,
   Shield, BookOpen, Clock, Tag, Palette, Link2, FileText,
   UserPlus, Bell, Search, Filter, Plus, CheckCircle2,
-  AlertTriangle, Info, Zap, Lock, Eye, X
+  AlertTriangle, Info, Zap, Lock, Eye, X, Download
 } from 'lucide-react';
 
 // Searchable section definitions
@@ -83,12 +85,22 @@ const Manual = () => {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center gap-3 mb-8">
-          <BookOpen className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Manual do Sistema</h1>
-            <p className="text-muted-foreground">Guia completo de todas as funcionalidades</p>
+        <div className="flex items-center justify-between gap-3 mb-8">
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Manual do Sistema</h1>
+              <p className="text-muted-foreground">Guia completo de todas as funcionalidades</p>
+            </div>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => exportManualPDF({ isAdmin: canManageSettings, isSuperAdmin })}
+            className="gap-2 shrink-0"
+          >
+            <Download className="h-4 w-4" />
+            Exportar PDF
+          </Button>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 mb-6">
