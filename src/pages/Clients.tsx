@@ -262,11 +262,11 @@ const Clients = () => {
     return (
       <div className="min-h-screen flex flex-col w-full bg-background">
         <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="flex flex-1 w-full">
+        <div className="flex flex-1 w-full overflow-hidden">
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <main className="flex-1 p-4 overflow-hidden">
             <div className="h-full flex flex-col lg:flex-row gap-4">
-              <div className="lg:w-[55%] flex flex-col">
+              <div className="lg:w-[35%] flex flex-col">
                 <div className="h-9 w-48 bg-muted animate-pulse rounded mb-4" />
                 <div className="flex flex-col gap-3">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -274,7 +274,7 @@ const Clients = () => {
                   ))}
                 </div>
               </div>
-              <div className="lg:w-[45%] hidden lg:block">
+              <div className="lg:w-[65%] hidden lg:block">
                 <div className="h-8 w-48 bg-muted animate-pulse rounded mb-4" />
                 <div className="h-96 bg-muted animate-pulse rounded-xl" />
               </div>
@@ -285,7 +285,7 @@ const Clients = () => {
     );
   }
 
-  return (
+  const clientsContent = (
     <div className="min-h-screen flex flex-col w-full bg-background">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       
