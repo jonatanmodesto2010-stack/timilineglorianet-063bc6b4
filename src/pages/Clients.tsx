@@ -515,7 +515,7 @@ const Clients = () => {
           onClose={() => { setShowClientTimelineDialog(false); setClientForTimeline(null); }}
         />
       )}
-    </div>
+    </AppLayout>
   );
 };
 
