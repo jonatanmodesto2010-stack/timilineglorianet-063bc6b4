@@ -12,20 +12,18 @@ function encodeIxcToken(rawToken: string): string {
   return btoa(`${rawToken}:`);
 }
 
-async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string, page = 1, perPage = 500, extraBody: Record<string, any> = {}) {
+async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string, body: Record<string, any> = {}) {
   const url = `${apiUrl.replace(/\/$/, '')}/${endpoint}`;
-  const body: Record<string, any> = {
+  const defaultBody: Record<string, any> = {
     qtype: 'id',
     query: '0',
     oper: '>',
-    page: String(page),
-    rp: String(perPage),
+    page: '1',
+    rp: '500',
     sortname: 'id',
     sortorder: 'asc',
-    ...extraBody,
+    ...body,
   };
-
-  console.log(`IXC Request: ${endpoint} page ${page}`);
 
   const res = await fetch(url, {
     method: 'POST',
@@ -34,13 +32,12 @@ async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string
       'Authorization': `Basic ${encodedToken}`,
       'ixcsoft': 'listar',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(defaultBody),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    console.error(`IXC API error ${res.status} for ${endpoint}: ${text.substring(0, 200)}`);
-    throw new Error(`IXC API error ${res.status}: ${text}`);
+    throw new Error(`IXC API error ${res.status}: ${text.substring(0, 200)}`);
   }
 
   const data = await res.json();
@@ -62,19 +59,9 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Auth check (optional - skip if no auth header for testing)
-    const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !user) {
-        console.log('Auth failed, continuing anyway for service calls');
-      }
-    }
-
     const body = await req.json();
     const { organization_id, client_ids } = body;
-    console.log(`organization_id: ${organization_id}, client_ids: ${JSON.stringify(client_ids)}`);
+    console.log(`org: ${organization_id}, clients: ${JSON.stringify(client_ids)}`);
 
     if (!organization_id) {
       return new Response(JSON.stringify({ error: 'organization_id é obrigatório', online_clients: [] }), {
@@ -92,7 +79,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (intError || !integration) {
-      console.log('No IXC integration found:', intError?.message);
       return new Response(JSON.stringify({ error: 'Integração IXC não encontrada', online_clients: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -105,112 +91,76 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`IXC API URL: ${api_url}`);
     const encodedToken = encodeIxcToken(api_token);
-
-    // Try multiple approaches to find online clients
     const onlineClientIds: string[] = [];
 
-    // Approach 1: Try radusuarios endpoint with online filter
-    try {
-      console.log('Trying radusuarios endpoint...');
-      let page = 1;
-      const perPage = 500;
-      let totalFound = 0;
-
-      while (true) {
-        const { registros, total } = await ixcRequest(api_url, encodedToken, 'radusuarios', page, perPage);
-        
-        console.log(`radusuarios page ${page}: ${registros.length} records, total: ${total}`);
-        
-        // Log sample record to understand structure
-        if (page === 1 && registros.length > 0) {
-          const sample = registros[0];
-          console.log('radusuarios fields:', Object.keys(sample).join(', '));
-          // Log online-related fields
-          const relevantFields: Record<string, any> = {};
-          for (const key of Object.keys(sample)) {
-            if (key.includes('online') || key.includes('cliente') || key.includes('ativo') || 
-                key.includes('status') || key === 'id') {
-              relevantFields[key] = sample[key];
-            }
-          }
-          console.log('Relevant fields sample:', JSON.stringify(relevantFields));
-        }
-        
-        for (const r of registros) {
-          const clientId = String(r.id_cliente || '');
-          // Check multiple possible field names/values for online status
-          const isOnline = r.online === 'S' || r.online === 's' || 
-                           r.online === '1' || r.online === 1 || 
-                           r.online === true || r.online === 'sim' ||
-                           r.ativo === 'S' || r.ativo === 's';
-          
-          if (clientId && isOnline) {
-            onlineClientIds.push(clientId);
-          }
-        }
-
-        totalFound = total;
-        if (registros.length === 0 || registros.length < perPage) break;
-        page++;
-      }
-
-      console.log(`radusuarios: found ${onlineClientIds.length} online out of ${totalFound} total`);
-    } catch (err: any) {
-      console.error('radusuarios failed:', err.message);
+    // Step 1: First, get a sample radusuarios record for ONE specific client to understand structure
+    if (client_ids && client_ids.length > 0) {
+      const sampleClientId = client_ids[0];
+      console.log(`Checking radusuarios for client_id: ${sampleClientId}`);
       
-      // Approach 2: Try radius_online endpoint
       try {
-        console.log('Trying radius_online endpoint...');
-        const { registros, total } = await ixcRequest(api_url, encodedToken, 'radius_online', 1, 500);
-        console.log(`radius_online: ${registros.length} records, total: ${total}`);
+        const { registros, total } = await ixcRequest(api_url, encodedToken, 'radusuarios', {
+          qtype: 'id_cliente',
+          query: String(sampleClientId),
+          oper: '=',
+          page: '1',
+          rp: '10',
+        });
+        
+        console.log(`radusuarios for client ${sampleClientId}: ${registros.length} records (total: ${total})`);
         
         if (registros.length > 0) {
-          console.log('radius_online fields:', Object.keys(registros[0]).join(', '));
-          console.log('radius_online sample:', JSON.stringify(registros[0]).substring(0, 500));
+          // Log ALL fields of first record
+          const record = registros[0];
+          console.log('ALL FIELDS:', JSON.stringify(record));
         }
-        
-        for (const r of registros) {
-          const clientId = String(r.id_cliente || r.cliente_id || '');
-          if (clientId) onlineClientIds.push(clientId);
-        }
-      } catch (err2: any) {
-        console.error('radius_online also failed:', err2.message);
-        
-        // Approach 3: Try radacct (active connections = no disconnect time)
+      } catch (err: any) {
+        console.error(`radusuarios query failed: ${err.message}`);
+      }
+    }
+
+    // Step 2: Query radusuarios for each client_id individually (much faster than scanning all 24k records)
+    if (client_ids && Array.isArray(client_ids)) {
+      for (const clientId of client_ids) {
         try {
-          console.log('Trying radacct endpoint...');
-          const { registros, total } = await ixcRequest(api_url, encodedToken, 'radacct', 1, 100);
-          console.log(`radacct: ${registros.length} records, total: ${total}`);
+          const { registros } = await ixcRequest(api_url, encodedToken, 'radusuarios', {
+            qtype: 'id_cliente',
+            query: String(clientId),
+            oper: '=',
+            page: '1',
+            rp: '10',
+          });
           
-          if (registros.length > 0) {
-            console.log('radacct fields:', Object.keys(registros[0]).join(', '));
+          for (const r of registros) {
+            // Check all possible online indicators
+            const isOnline = r.online === 'S' || r.online === 's' || 
+                             r.online === '1' || r.online === 1 || 
+                             r.online === true || r.online === 'sim' ||
+                             r.ativo === 'S' || r.ativo === 's';
+            
+            if (isOnline) {
+              onlineClientIds.push(String(clientId));
+              break; // Found one online record for this client, enough
+            }
           }
-        } catch (err3: any) {
-          console.error('radacct also failed:', err3.message);
+        } catch (err: any) {
+          console.error(`Error checking client ${clientId}: ${err.message}`);
         }
       }
     }
-    
-    // Filter to requested client_ids
-    let result = [...new Set(onlineClientIds)];
-    if (client_ids && Array.isArray(client_ids) && client_ids.length > 0) {
-      const filterSet = new Set(client_ids.map(String));
-      result = result.filter(id => filterSet.has(id));
-    }
 
-    console.log(`Final result: ${result.length} online clients`);
+    console.log(`Result: ${onlineClientIds.length} online clients out of ${client_ids?.length || 0}`);
 
     return new Response(JSON.stringify({ 
-      online_clients: result,
+      online_clients: [...new Set(onlineClientIds)],
       total_online: new Set(onlineClientIds).size,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error: any) {
-    console.error('Error checking online status:', error);
+    console.error('Error:', error);
     return new Response(JSON.stringify({ error: error.message, online_clients: [] }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
