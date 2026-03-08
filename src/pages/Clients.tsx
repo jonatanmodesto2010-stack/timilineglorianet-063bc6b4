@@ -451,8 +451,7 @@ const Clients = () => {
               />
             </div>
           </div>
-        </main>
-      </div>
+        </div>
 
       {/* New Client Modal */}
       <Dialog open={newClientModalOpen} onOpenChange={setNewClientModalOpen}>
