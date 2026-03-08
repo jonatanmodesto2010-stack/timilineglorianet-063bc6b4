@@ -21,7 +21,7 @@ interface OperatorStats {
 }
 
 const Reports = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [loading, setLoading] = useState(true);
   const [operators, setOperators] = useState<OperatorStats[]>([]);
   const [period, setPeriod] = useState('30');

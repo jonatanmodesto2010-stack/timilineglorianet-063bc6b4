@@ -23,7 +23,7 @@ interface BoletoData {
 }
 
 const Dashboard = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [allTimelines, setAllTimelines] = useState<ClientTimeline[]>([]);
   const [boletos, setBoletos] = useState<BoletoData[]>([]);
   const [loading, setLoading] = useState(true);

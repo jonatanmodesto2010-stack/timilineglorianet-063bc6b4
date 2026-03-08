@@ -28,7 +28,7 @@ interface Event {
 }
 
 const Calendar = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());

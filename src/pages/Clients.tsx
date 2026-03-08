@@ -22,7 +22,7 @@ const ITEMS_PER_PAGE = 30;
 const CLIENT_COLUMNS = 'id, client_name, client_id, status, is_active, organization_id, ixc_filial_id, ixc_filial_name, start_date, created_at, updated_at, user_id, completed_at, completion_notes, boleto_value, due_date';
 
 const Clients = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [clients, setClients] = useState<ClientTimeline[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [overdueDaysMap, setOverdueDaysMap] = useState<Map<string, number>>(new Map());
