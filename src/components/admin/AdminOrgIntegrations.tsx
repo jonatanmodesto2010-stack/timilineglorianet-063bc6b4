@@ -539,7 +539,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
                       return (
                         <tr key={log.id} className="border-b border-border/50 last:border-0">
                           <td className="py-2">{formatDate(log.created_at)}</td>
-                          <td className="py-2">{log.sync_type === 'full' ? 'Completa' : log.sync_type === 'boletos' ? 'Boletos' : log.sync_type === 'clients' ? 'Clientes' : log.sync_type}</td>
+                          <td className="py-2">{log.sync_type === 'full' ? 'Completa' : log.sync_type === 'boletos' ? 'Boletos' : log.sync_type === 'clients' ? 'Clientes' : log.sync_type === 'areceber' ? 'Contas a Receber' : log.sync_type}</td>
                           <td className="py-2">
                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${st.className}`}>
                               {st.icon}{st.label}
