@@ -36,6 +36,9 @@ const AppContent = () => {
         <Route path="/visual-timeline" element={<VisualTimeline />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/organizations" element={<AdminOrganizations />} />
+        <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

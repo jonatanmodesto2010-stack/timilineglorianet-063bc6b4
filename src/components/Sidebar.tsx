@@ -14,6 +14,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isSuperAdmin } = useSuperAdmin();
 
   const menuItems = [
     { icon: Users, label: 'Clientes', path: '/clients', active: location.pathname === '/clients' || location.pathname === '/' },
@@ -21,6 +22,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', active: location.pathname === '/dashboard' },
     { icon: BarChart3, label: 'Relatórios', path: '/reports', active: location.pathname === '/reports' },
     { icon: Settings, label: 'Configurações', path: '/settings', active: location.pathname === '/settings' },
+    ...(isSuperAdmin ? [{ icon: Shield, label: 'Super Admin', path: '/admin', active: location.pathname.startsWith('/admin') }] : []),
   ];
 
   const handleNavigation = (path: string) => {

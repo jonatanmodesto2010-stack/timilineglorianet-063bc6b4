@@ -10,7 +10,7 @@ import { authSchema } from '@/lib/validations';
 import { z } from 'zod';
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [email, setEmail] = useState('');
