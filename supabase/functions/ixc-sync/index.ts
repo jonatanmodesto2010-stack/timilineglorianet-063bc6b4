@@ -288,30 +288,33 @@ Deno.serve(async (req) => {
           let blockedIds = new Set<string>();
           try {
             const blocked = await fetchAllIxcRecords(api_url, token, 'cliente_bloqueado');
-            console.log(`Blocked clients from IXC: ${blocked.length}`);
-            if (blocked.length > 0) {
-              console.log(`Sample blocked: ${JSON.stringify(blocked[0])}`);
-            }
+            console.log(`Blocked clients from cliente_bloqueado: ${blocked.length}`);
             blockedIds = new Set(blocked.map((b: any) => String(b.id_cliente)));
-            console.log(`Blocked IDs set size: ${blockedIds.size}`);
           } catch (e) {
-            console.error(`Error fetching blocked: ${e.message}`);
-            orgResult.errors.push(`Erro ao buscar bloqueados: ${e.message}`);
+            console.log(`cliente_bloqueado endpoint not available: ${e.message}`);
           }
 
-          // Build contract map
+          // Build contract map - use status_internet to detect blocked clients
           const contractMap = new Map<string, { active: boolean; blocked: boolean }>();
           for (const c of contracts) {
             const cid = String(c.id_cliente);
             const isContractActive = c.status === 'A';
+            // Client is blocked if: contract is active BUT internet access is not active,
+            // OR client is in the cliente_bloqueado list
+            const isBlocked = blockedIds.has(cid) || 
+              (isContractActive && c.status_internet && c.status_internet !== 'A');
+            
             const existing = contractMap.get(cid);
+            // Prefer active contract info; if blocked on ANY active contract, mark as blocked
             if (!existing || isContractActive) {
               contractMap.set(cid, {
                 active: isContractActive,
-                blocked: blockedIds.has(cid),
+                blocked: isBlocked || (existing?.blocked ?? false),
               });
             }
           }
+
+          console.log(`Contract map size: ${contractMap.size}, blocked from contracts: ${[...contractMap.values()].filter(v => v.blocked).length}, blocked from endpoint: ${blockedIds.size}`);
 
           // Discover clients from contracts not in main list
           const mainClientIds = new Set(clients.map((c: any) => String(c.id)));
