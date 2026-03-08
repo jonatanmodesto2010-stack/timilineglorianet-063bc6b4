@@ -400,6 +400,11 @@ Deno.serve(async (req) => {
           const updateFilialNames: string[] = [];
 
           let blockedCount = 0;
+          let blockedFromEndpointCount = 0;
+          let blockedFromContractCount = 0;
+          let blockedFromClientFieldCount = 0;
+          let archivedCount = 0;
+          let activeCount = 0;
 
           for (const client of clients) {
             const clientIdStr = String(client.id);
@@ -414,17 +419,18 @@ Deno.serve(async (req) => {
             let status = 'active';
 
             // PRIORITY 1: Blocked (from any source) - ABSOLUTE PRIORITY
-            // Sources: cliente_bloqueado endpoint, contract status_internet, client.bloqueado field
             const isBlockedFromEndpoint = blockedIds.has(clientIdStr);
             const isBlockedFromContract = contract?.blocked ?? false;
             const isBlockedFromClient = client.bloqueado === 'S';
             const isBlocked = isBlockedFromEndpoint || isBlockedFromContract || isBlockedFromClient;
 
             if (isBlocked) {
-              // Blocked = is_active false + status 'active' (NOT archived)
               isActive = false;
               status = 'active';
               blockedCount++;
+              if (isBlockedFromEndpoint) blockedFromEndpointCount++;
+              if (isBlockedFromContract) blockedFromContractCount++;
+              if (isBlockedFromClient) blockedFromClientFieldCount++;
             } else if (!isClientActive) {
               // PRIORITY 2: Client inactive in IXC (ativo != 'S')
               isActive = false;
