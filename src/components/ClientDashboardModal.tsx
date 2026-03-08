@@ -36,6 +36,7 @@ interface Client {
   due_date?: string | null;
   boleto_value?: string | null;
   is_active: boolean;
+  status?: string;
   created_at?: string;
   updated_at?: string;
   organization_id?: string;
@@ -460,14 +461,35 @@ export const ClientDashboardModal = ({
 
                 <div className="flex items-center justify-between p-4 bg-card rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${formData.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <Label htmlFor="is_active">Status Ativo</Label>
+                    {(() => {
+                      const isArchived = client.status === 'archived';
+                      const isCompleted = client.status === 'completed';
+                      const isBlocked = !client.is_active && !isArchived && !isCompleted;
+                      const hasOverdue = boletos.some(b => {
+                        if (b.status === 'pago' || b.status === 'cancelado') return false;
+                        const due = new Date(b.due_date);
+                        due.setHours(0, 0, 0, 0);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return today > due;
+                      });
+                      const isOverdue = client.is_active && client.status === 'active' && hasOverdue;
+
+                      let colorClass = 'bg-green-500';
+                      let label = 'Ativo';
+                      if (isBlocked) { colorClass = 'bg-red-500'; label = 'Bloqueado'; }
+                      else if (isArchived) { colorClass = 'bg-gray-500'; label = 'Inativo'; }
+                      else if (isCompleted) { colorClass = 'bg-gray-500'; label = 'Finalizado'; }
+                      else if (isOverdue) { colorClass = 'bg-yellow-500'; label = 'Vencido'; }
+
+                      return (
+                        <>
+                          <div className={`w-3 h-3 rounded-full ${colorClass}`} />
+                          <Label>Status: {label}</Label>
+                        </>
+                      );
+                    })()}
                   </div>
-                  <Switch
-                    id="is_active"
-                    checked={formData.is_active}
-                    disabled
-                  />
                 </div>
               </div>
             </div>
