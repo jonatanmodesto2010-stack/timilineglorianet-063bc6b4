@@ -47,7 +47,15 @@ Deno.serve(async (req) => {
     }
 
     const encodedToken = encodeIxcToken(integration.api_token);
-    const apiUrl = integration.api_url.replace(/\/$/, '');
+    // The api_url may contain /fn_areceber or other sub-paths
+    // radusuarios needs the base webservice URL, so strip any sub-path after /webservice/v1
+    let apiUrl = integration.api_url.replace(/\/$/, '');
+    // Extract base URL up to /webservice/v1
+    const wsMatch = apiUrl.match(/(https?:\/\/.+\/webservice\/v1)/i);
+    if (wsMatch) {
+      apiUrl = wsMatch[1];
+    }
+    console.log(`Using base API URL: ${apiUrl}`);
     const requestedIds = new Set(client_ids.map(String));
     const onlineClientIds = new Set<string>();
 
