@@ -144,7 +144,13 @@ Deno.serve(async (req) => {
       }
       const token = encodeIxcToken(api_token);
       const { total } = await ixcRequest(api_url, token, 'cliente', 1, 1);
-      return new Response(JSON.stringify({ success: true, total_clients: total }), {
+      // Count only active clients
+      const { total: activeTotal } = await ixcRequest(api_url, token, 'cliente', 1, 1, {
+        qtype: 'ativo',
+        query: 'S',
+        oper: '=',
+      });
+      return new Response(JSON.stringify({ success: true, total_clients: total, active_clients: activeTotal }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
