@@ -361,13 +361,14 @@ const Clients = () => {
                   </div>
                 </div>
 
-                {/* Client List */}
+                {/* Client List - Scrollable */}
+                <div className="flex-1 overflow-y-auto min-h-0">
                 {paginatedClients.length === 0 ? (
                   <div className="text-center py-20 text-muted-foreground">
                     <p>Nenhum cliente encontrado</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2 w-full">
+                  <div className="flex flex-col gap-2 w-full pr-1">
                     {paginatedClients.map((client, index) => {
                       const info = getClientBadgeInfo(client);
                       return (
