@@ -1,4 +1,4 @@
-import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen, CheckCircle2, CreditCard } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_NAME, APP_VERSION, BUILD_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
