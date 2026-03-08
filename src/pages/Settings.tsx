@@ -15,7 +15,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { canManageUsers, canManageSettings, isLoading } = useUserRole();
   const navigate = useNavigate();

@@ -13,7 +13,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
