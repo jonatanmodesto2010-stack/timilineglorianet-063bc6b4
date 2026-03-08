@@ -317,9 +317,8 @@ const Reports = () => {
               </>
             )}
           </div>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

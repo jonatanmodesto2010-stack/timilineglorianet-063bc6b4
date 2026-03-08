@@ -303,8 +303,7 @@ export default function Profile() {
               </CardContent>
             </Card>
           </div>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 }

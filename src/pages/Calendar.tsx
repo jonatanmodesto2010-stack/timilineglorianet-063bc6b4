@@ -900,9 +900,8 @@ const Calendar = () => {
               )}
             </DialogContent>
           </Dialog>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

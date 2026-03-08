@@ -653,9 +653,8 @@ const Index = () => {
               </TabsContent>
             </Tabs>
           </motion.div>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

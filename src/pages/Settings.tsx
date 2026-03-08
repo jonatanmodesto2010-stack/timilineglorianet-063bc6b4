@@ -109,9 +109,8 @@ const Settings = () => {
             <HistorySettings />
           </TabsContent>
         </Tabs>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

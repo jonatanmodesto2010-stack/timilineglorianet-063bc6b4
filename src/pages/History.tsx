@@ -256,9 +256,8 @@ const History = () => {
               </div>
             )}
           </motion.div>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
