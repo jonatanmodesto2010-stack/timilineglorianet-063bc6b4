@@ -1,4 +1,6 @@
 import { Sun, Moon, LogOut, User } from 'lucide-react';
+import { APP_NAME } from '@/config/version';
+import logo from '@/assets/logo.png';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
