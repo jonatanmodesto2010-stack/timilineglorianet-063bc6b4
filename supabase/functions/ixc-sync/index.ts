@@ -413,16 +413,30 @@ Deno.serve(async (req) => {
             let isActive = true;
             let status = 'active';
 
-            if (contract?.blocked || blockedIds.has(clientIdStr)) {
+            // PRIORITY 1: Blocked (from any source) - ABSOLUTE PRIORITY
+            // Sources: cliente_bloqueado endpoint, contract status_internet, client.bloqueado field
+            const isBlockedFromEndpoint = blockedIds.has(clientIdStr);
+            const isBlockedFromContract = contract?.blocked ?? false;
+            const isBlockedFromClient = client.bloqueado === 'S';
+            const isBlocked = isBlockedFromEndpoint || isBlockedFromContract || isBlockedFromClient;
+
+            if (isBlocked) {
+              // Blocked = is_active false + status 'active' (NOT archived)
               isActive = false;
               status = 'active';
               blockedCount++;
             } else if (!isClientActive) {
-              status = 'archived';
+              // PRIORITY 2: Client inactive in IXC (ativo != 'S')
               isActive = false;
-            } else if (contract) {
-              isActive = contract.active;
-              status = contract.active ? 'active' : 'archived';
+              status = 'archived';
+            } else if (contract && !contract.active) {
+              // PRIORITY 3: Client active but all contracts inactive
+              isActive = false;
+              status = 'archived';
+            } else {
+              // PRIORITY 4: Active client
+              isActive = true;
+              status = 'active';
             }
 
             const existing = existingMap.get(clientIdStr);
