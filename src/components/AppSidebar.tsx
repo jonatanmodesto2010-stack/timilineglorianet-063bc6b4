@@ -1,7 +1,8 @@
-import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen } from 'lucide-react';
+import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen, CheckCircle2, Zap } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { APP_NAME, getFullVersion, BUILD_VERSION } from '@/config/version';
+import { APP_NAME, APP_VERSION, BUILD_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -65,17 +66,33 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className={`text-xs text-muted-foreground ${collapsed ? 'text-center' : ''}`}>
-          {!collapsed ? (
-            <>
-              <p className="font-semibold mb-1">{APP_NAME}</p>
-              <p>{getFullVersion()}</p>
-              <p className="text-[10px] opacity-70">Build: {BUILD_VERSION}</p>
-            </>
-          ) : (
-            <p className="font-semibold">v{BUILD_VERSION}</p>
-          )}
-        </div>
+        {!collapsed ? (
+          <div className="rounded-xl border border-border/60 bg-card/50 p-3 shadow-sm backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-bold tracking-tight text-foreground">{APP_NAME}</span>
+              </div>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-semibold">
+                v{APP_VERSION}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground font-mono">
+                Build {BUILD_VERSION}
+              </span>
+              <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="h-3 w-3" />
+                <span className="font-medium">Estável</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-1 py-1">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[9px] font-mono text-muted-foreground">v{APP_VERSION}</span>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
