@@ -17,9 +17,8 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { isSuperAdmin } = useSuperAdmin();
 
   const menuItems = [
-    { icon: Users, label: 'Clientes', path: '/clients', active: location.pathname === '/clients' || location.pathname === '/' },
-    { icon: Calendar, label: 'Calendário', path: '/calendar', active: location.pathname === '/calendar' },
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', active: location.pathname === '/dashboard' },
+    { icon: LayoutDashboard, label: 'Principal', path: '/principal', active: location.pathname === '/principal' || location.pathname === '/' },
+    { icon: Users, label: 'Clientes', path: '/clients', active: location.pathname === '/clients' },
     { icon: BarChart3, label: 'Relatórios', path: '/reports', active: location.pathname === '/reports' },
     { icon: Settings, label: 'Configurações', path: '/settings', active: location.pathname === '/settings' },
     ...(isSuperAdmin ? [{ icon: Shield, label: 'Super Admin', path: '/admin', active: location.pathname.startsWith('/admin') }] : []),
