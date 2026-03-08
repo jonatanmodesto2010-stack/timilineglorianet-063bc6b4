@@ -1,4 +1,4 @@
-import { Building2, Users, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { Building2, LayoutDashboard, ArrowLeft, Package, CreditCard, Receipt } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export const AdminSidebar = () => {
@@ -8,6 +8,9 @@ export const AdminSidebar = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
     { icon: Building2, label: 'Organizações', path: '/admin/organizations' },
+    { icon: Package, label: 'Planos', path: '/admin/plans' },
+    { icon: CreditCard, label: 'Assinaturas', path: '/admin/subscriptions' },
+    { icon: Receipt, label: 'Faturas', path: '/admin/invoices' },
   ];
 
   return (
