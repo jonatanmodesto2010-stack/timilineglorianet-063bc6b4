@@ -81,9 +81,9 @@ const Reports = () => {
       if (evError) throw evError;
 
       // Map line_id -> timeline_id
-      const lineToTimeline = new Map((lines || []).map((l: any) => [l.id, l.timeline_id]));
+      const lineToTimeline = new Map<string, string>((lines || []).map((l: any) => [l.id as string, l.timeline_id as string]));
       // Map timeline_id -> user_id (last updater)
-      const timelineToUser = new Map((timelines || []).map((t: any) => [t.id, t.user_id]));
+      const timelineToUser = new Map<string, string>((timelines || []).map((t: any) => [t.id as string, t.user_id as string]));
 
       // Build per-user stats
       const userMap = new Map<string, OperatorStats>();

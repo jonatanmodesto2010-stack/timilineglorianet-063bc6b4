@@ -18,6 +18,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { icon: Users, label: 'Clientes', path: '/clients', active: location.pathname === '/clients' || location.pathname === '/' },
     { icon: Calendar, label: 'Calendário', path: '/calendar', active: location.pathname === '/calendar' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', active: location.pathname === '/dashboard' },
+    { icon: BarChart3, label: 'Relatórios', path: '/reports', active: location.pathname === '/reports' },
     { icon: Settings, label: 'Configurações', path: '/settings', active: location.pathname === '/settings' },
   ];
 
