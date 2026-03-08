@@ -231,6 +231,16 @@ const Clients = () => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, filialFilter]);
 
+  // Sort clients based on sortBy option
+  const sortedClients = useMemo(() => {
+    if (sortBy === 'default') return clients;
+    return [...clients].sort((a, b) => {
+      const daysA = overdueDaysMap.get(a.id) || 0;
+      const daysB = overdueDaysMap.get(b.id) || 0;
+      return sortBy === 'overdue_desc' ? daysB - daysA : daysA - daysB;
+    });
+  }, [clients, overdueDaysMap, sortBy]);
+
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
