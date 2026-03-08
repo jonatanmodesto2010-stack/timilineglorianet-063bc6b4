@@ -148,7 +148,7 @@ export const ClientDashboardModal = ({
   const loadBoletos = async () => {
     const { data, error } = await supabase
       .from('client_boletos')
-      .select('*')
+      .select('id, boleto_value, due_date, status, description')
       .eq('timeline_id', client.id)
       .order('due_date', { ascending: true });
 
