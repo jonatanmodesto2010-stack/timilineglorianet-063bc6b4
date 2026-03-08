@@ -47,6 +47,18 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
+      <SidebarHeader className="border-b border-border/40 pb-3">
+        {!collapsed ? (
+          <div className="flex items-center gap-2 px-2 pt-1">
+            <img src={logo} alt={APP_NAME} className="h-8 object-contain" />
+          </div>
+        ) : (
+          <div className="flex justify-center pt-1">
+            <img src={logoIcon} alt={APP_NAME} className="h-7 w-7 object-contain" />
+          </div>
+        )}
+      </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -72,10 +84,7 @@ export function AppSidebar() {
         {!collapsed ? (
           <div className="rounded-xl border border-border/60 bg-card/50 p-3 shadow-sm backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-bold tracking-tight text-foreground">{APP_NAME}</span>
-              </div>
+              <span className="text-xs font-bold tracking-tight text-foreground">{APP_NAME}</span>
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-semibold">
                 v{APP_VERSION}
               </Badge>
@@ -92,7 +101,6 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1 py-1">
-            <Zap className="h-3.5 w-3.5 text-primary" />
             <span className="text-[9px] font-mono text-muted-foreground">v{APP_VERSION}</span>
           </div>
         )}
