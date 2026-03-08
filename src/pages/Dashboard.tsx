@@ -212,8 +212,22 @@ const Dashboard = () => {
               </motion.div>
               {!loading && (
                 <div className="flex items-center gap-2">
+                  {filiais.length > 0 && (
+                    <Select value={filialFilter} onValueChange={setFilialFilter}>
+                      <SelectTrigger className="w-48">
+                        <Building2 size={14} className="mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Todas filiais" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas filiais</SelectItem>
+                        {filiais.map(([id, name]) => (
+                          <SelectItem key={id} value={id}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <DashboardDateFilter value={dateRange} onChange={setDateRange} />
-                  <DelinquentsExport timelines={allTimelines} boletos={boletos} />
+                  <DelinquentsExport timelines={filteredTimelines} boletos={filteredBoletos} />
                 </div>
               )}
             </div>
