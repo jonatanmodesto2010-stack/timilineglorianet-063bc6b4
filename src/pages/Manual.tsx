@@ -157,7 +157,7 @@ const Manual = () => {
                   <li><Badge className="text-xs">Super Admin</Badge> — Gestão de todas as organizações do sistema</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* CLIENTES */}
             <AccordionItem value="clientes" className="border rounded-lg px-4">
