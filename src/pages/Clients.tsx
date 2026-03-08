@@ -288,7 +288,23 @@ const Clients = () => {
             {/* Left Column - Client List */}
             <div className="flex-1 min-w-0">
               <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <h2 className="text-2xl font-bold text-foreground mb-6">Clientes</h2>
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
+                  {filiais.length > 0 && (
+                    <Select value={filialFilter} onValueChange={setFilialFilter}>
+                      <SelectTrigger className="w-[220px] h-9">
+                        <Building2 className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Todas filiais" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas filiais</SelectItem>
+                        {filiais.map(([id, name]) => (
+                          <SelectItem key={id} value={id}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
 
                 <ClientSearchFilters 
                   onFilterChange={(filters) => {
