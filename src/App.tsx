@@ -15,6 +15,9 @@ import Profile from "./pages/Profile";
 import VisualTimeline from "./pages/VisualTimeline";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
 
 const queryClient = new QueryClient();
 
