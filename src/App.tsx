@@ -28,6 +28,7 @@ const AppContent = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Clients />} />
+        <Route path="/principal" element={<Clients />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/dashboard" element={<Dashboard />} />
