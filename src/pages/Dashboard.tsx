@@ -68,13 +68,39 @@ const Dashboard = () => {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
+  // Extract unique filiais
+  const filiais = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of allTimelines) {
+      if (t.ixc_filial_id && t.ixc_filial_name) {
+        map.set(t.ixc_filial_id, t.ixc_filial_name);
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [allTimelines]);
+
+  // Filter timelines by filial
+  const filteredTimelines = useMemo(() => {
+    if (filialFilter === 'all') return allTimelines;
+    return allTimelines.filter(t => t.ixc_filial_id === filialFilter);
+  }, [allTimelines, filialFilter]);
+
+  // Filter boletos by filial-filtered timelines
+  const filialTimelineIds = useMemo(() => {
+    return new Set(filteredTimelines.map(t => t.id));
+  }, [filteredTimelines]);
+
   const filteredBoletos = useMemo(() => {
-    if (!dateRange.from || !dateRange.to) return boletos;
-    return boletos.filter(b => {
+    let filtered = boletos;
+    if (filialFilter !== 'all') {
+      filtered = filtered.filter(b => filialTimelineIds.has(b.timeline_id));
+    }
+    if (!dateRange.from || !dateRange.to) return filtered;
+    return filtered.filter(b => {
       const d = new Date(b.due_date + 'T00:00:00');
       return d >= dateRange.from! && d <= dateRange.to!;
     });
-  }, [boletos, dateRange]);
+  }, [boletos, dateRange, filialFilter, filialTimelineIds]);
 
   const stats = useMemo(() => {
     const grouped = groupTimelinesByClient(allTimelines);
