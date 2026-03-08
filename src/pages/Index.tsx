@@ -44,7 +44,7 @@ interface TimelineData {
 }
 
 const Index = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [timelines, setTimelines] = useState<TimelineData[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
