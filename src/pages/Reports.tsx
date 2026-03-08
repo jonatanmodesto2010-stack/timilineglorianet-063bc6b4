@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BarChart3, Users, Trophy, Target, Clock, CheckCircle, XCircle, TrendingUp, Calendar } from 'lucide-react';
-import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
+import { AppLayout } from '@/components/AppLayout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -22,7 +21,7 @@ interface OperatorStats {
 }
 
 const Reports = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [loading, setLoading] = useState(true);
   const [operators, setOperators] = useState<OperatorStats[]>([]);
   const [period, setPeriod] = useState('30');
@@ -175,11 +174,8 @@ const Reports = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
-      <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      <div className="flex flex-1 w-full">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 p-6 overflow-auto">
+    <AppLayout>
+      <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
               <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
@@ -321,9 +317,8 @@ const Reports = () => {
               </>
             )}
           </div>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

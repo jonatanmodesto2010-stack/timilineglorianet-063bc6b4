@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, History, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2 } from 'lucide-react';
-import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
+import { AppLayout } from '@/components/AppLayout';
 import { ClientDashboardModal } from '@/components/ClientDashboardModal';
 import { ClientSearchFilters } from '@/components/ClientSearchFilters';
 import { CalendarWidget } from '@/components/CalendarWidget';
@@ -23,7 +22,7 @@ const ITEMS_PER_PAGE = 30;
 const CLIENT_COLUMNS = 'id, client_name, client_id, status, is_active, organization_id, ixc_filial_id, ixc_filial_name, start_date, created_at, updated_at, user_id, completed_at, completion_notes, boleto_value, due_date';
 
 const Clients = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [clients, setClients] = useState<ClientTimeline[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [overdueDaysMap, setOverdueDaysMap] = useState<Map<string, number>>(new Map());
@@ -285,33 +284,24 @@ const Clients = () => {
 
   if (loading && clients.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="flex flex-1 w-full">
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-7xl mx-auto">
-              <div className="h-9 w-48 bg-muted animate-pulse rounded mb-6" />
-              <div className="flex flex-col gap-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
-                ))}
-              </div>
+      <AppLayout>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="h-9 w-48 bg-muted animate-pulse rounded mb-6" />
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+              ))}
             </div>
-          </main>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
-      <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      
-      <div className="flex flex-1 w-full">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        
-        <main className="flex-1 p-6 overflow-auto">
+    <AppLayout>
+      <div className="p-6">
           <div className="max-w-7xl mx-auto flex gap-6">
             {/* Left Column - Client List */}
             <div className="flex-1 min-w-0">
@@ -461,8 +451,7 @@ const Clients = () => {
               />
             </div>
           </div>
-        </main>
-      </div>
+        </div>
 
       {/* New Client Modal */}
       <Dialog open={newClientModalOpen} onOpenChange={setNewClientModalOpen}>
@@ -525,7 +514,7 @@ const Clients = () => {
           onClose={() => { setShowClientTimelineDialog(false); setClientForTimeline(null); }}
         />
       )}
-    </div>
+    </AppLayout>
   );
 };
 

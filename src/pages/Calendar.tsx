@@ -4,8 +4,7 @@ import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Search, BarChart3, Grid3x3, CalendarDays, Clock } from 'lucide-react';
-import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
+import { AppLayout } from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseClient } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +28,7 @@ interface Event {
 }
 
 const Calendar = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -354,35 +353,20 @@ const Calendar = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <Header 
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
-        
-        <div className="flex flex-1 w-full">
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-6xl mx-auto">
-              <div className="h-9 w-64 bg-muted animate-pulse rounded mb-6" />
-              <div className="h-96 bg-muted animate-pulse rounded-xl" />
-            </div>
-          </main>
+      <AppLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="h-9 w-64 bg-muted animate-pulse rounded mb-6" />
+            <div className="h-96 bg-muted animate-pulse rounded-xl" />
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
-      <Header 
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-      />
-      
-      <div className="flex flex-1 w-full">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        
-        <main className="flex-1 p-6 overflow-auto">
+    <AppLayout>
+      <div className="p-6">
           <motion.div 
             initial={{ opacity: 0, y: -20 }} 
             animate={{ opacity: 1, y: 0 }} 
@@ -916,9 +900,8 @@ const Calendar = () => {
               )}
             </DialogContent>
           </Dialog>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

@@ -4,8 +4,7 @@ import { motion } from 'framer-motion';
 import { Plus, Search } from 'lucide-react';
 import { Timeline } from '@/components/Timeline';
 import { TimelineSkeleton } from '@/components/TimelineSkeleton';
-import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
+import { AppLayout } from '@/components/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseClient } from '@/lib/supabase-client';
@@ -45,7 +44,7 @@ interface TimelineData {
 }
 
 const Index = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const [timelines, setTimelines] = useState<TimelineData[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -457,15 +456,8 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <Header 
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
-        
-        <div className="flex flex-1 w-full">
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          
-        <main className="flex-1 p-6 overflow-auto">
+      <AppLayout>
+        <div className="p-6">
           <motion.div 
             initial={{ opacity: 0, y: -20 }} 
             animate={{ opacity: 1, y: 0 }} 
@@ -479,22 +471,14 @@ const Index = () => {
             <TimelineSkeleton />
             <TimelineSkeleton />
           </motion.div>
-        </main>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
-      <Header 
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-      />
-      
-      <div className="flex flex-1 w-full">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        
-        <main className="flex-1 p-6 overflow-auto">
+    <AppLayout>
+      <div className="p-6">
           <motion.div 
             initial={{ opacity: 0, y: -20 }} 
             animate={{ opacity: 1, y: 0 }} 
@@ -669,9 +653,8 @@ const Index = () => {
               </TabsContent>
             </Tabs>
           </motion.div>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
