@@ -155,6 +155,44 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Diagnostic action to understand blocked clients
+    if (action === 'diagnose_blocked') {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supa = createClient(supabaseUrl, supabaseKey);
+      const org_id = body.organization_id;
+      const { data: int } = await supa.from('organization_integrations').select('api_url, api_token').eq('organization_id', org_id).eq('integration_type', 'ixc').single();
+      if (!int) return new Response(JSON.stringify({ error: 'No integration found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const token = encodeIxcToken(int.api_token);
+      const results: any = {};
+
+      // 1. Try cliente_bloqueado
+      try {
+        const { registros, total } = await ixcRequest(int.api_url, token, 'cliente_bloqueado', 1, 5);
+        results.cliente_bloqueado = { total, sample: registros.slice(0, 2) };
+      } catch (e: any) { results.cliente_bloqueado = { error: e.message }; }
+
+      // 2. Check contracts with status_internet
+      try {
+        const { registros, total } = await ixcRequest(int.api_url, token, 'cliente_contrato', 1, 10);
+        results.contracts = { total, sample: registros.slice(0, 3).map((r: any) => ({ id: r.id, id_cliente: r.id_cliente, status: r.status, status_internet: r.status_internet, bloqueado: r.bloqueado })) };
+      } catch (e: any) { results.contracts = { error: e.message }; }
+
+      // 3. Check client fields
+      try {
+        const { registros } = await ixcRequest(int.api_url, token, 'cliente', 1, 3);
+        results.client_fields = registros.map((r: any) => {
+          const picked: any = { id: r.id, razao: r.razao, ativo: r.ativo };
+          for (const k of Object.keys(r)) {
+            if (k.includes('bloq') || k.includes('status') || k.includes('acesso') || k.includes('suspen')) picked[k] = r[k];
+          }
+          return picked;
+        });
+      } catch (e: any) { results.client_fields = { error: e.message }; }
+
+      return new Response(JSON.stringify(results), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Full sync or boleto sync
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -250,24 +288,33 @@ Deno.serve(async (req) => {
           let blockedIds = new Set<string>();
           try {
             const blocked = await fetchAllIxcRecords(api_url, token, 'cliente_bloqueado');
+            console.log(`Blocked clients from cliente_bloqueado: ${blocked.length}`);
             blockedIds = new Set(blocked.map((b: any) => String(b.id_cliente)));
           } catch (e) {
-            orgResult.errors.push(`Erro ao buscar bloqueados: ${e.message}`);
+            console.log(`cliente_bloqueado endpoint not available: ${e.message}`);
           }
 
-          // Build contract map
+          // Build contract map - use status_internet to detect blocked clients
           const contractMap = new Map<string, { active: boolean; blocked: boolean }>();
           for (const c of contracts) {
             const cid = String(c.id_cliente);
             const isContractActive = c.status === 'A';
+            // Client is blocked if: contract is active BUT internet access is not active,
+            // OR client is in the cliente_bloqueado list
+            const isBlocked = blockedIds.has(cid) || 
+              (isContractActive && c.status_internet && c.status_internet !== 'A');
+            
             const existing = contractMap.get(cid);
+            // Prefer active contract info; if blocked on ANY active contract, mark as blocked
             if (!existing || isContractActive) {
               contractMap.set(cid, {
                 active: isContractActive,
-                blocked: blockedIds.has(cid),
+                blocked: isBlocked || (existing?.blocked ?? false),
               });
             }
           }
+
+          console.log(`Contract map size: ${contractMap.size}, blocked from contracts: ${[...contractMap.values()].filter(v => v.blocked).length}, blocked from endpoint: ${blockedIds.size}`);
 
           // Discover clients from contracts not in main list
           const mainClientIds = new Set(clients.map((c: any) => String(c.id)));
@@ -330,6 +377,8 @@ Deno.serve(async (req) => {
           const updateFilialIds: string[] = [];
           const updateFilialNames: string[] = [];
 
+          let blockedCount = 0;
+
           for (const client of clients) {
             const clientIdStr = String(client.id);
             const clientName = client.razao || client.fantasia || `Cliente ${client.id}`;
@@ -344,10 +393,9 @@ Deno.serve(async (req) => {
 
             // Priority: blocked check first, then active/inactive
             if (contract?.blocked || blockedIds.has(clientIdStr)) {
-              // Client is blocked - mark as inactive but keep status 'active' 
-              // so the blocked filter (is_active=false, status not in archived/completed) works
               isActive = false;
               status = 'active';
+              blockedCount++;
             } else if (!isClientActive) {
               status = 'archived';
               isActive = false;
@@ -380,6 +428,8 @@ Deno.serve(async (req) => {
               });
             }
           }
+
+          console.log(`Status summary: ${blockedCount} blocked, ${toInsert.length} to insert, ${updateIds.length} to update`);
 
           // Batch insert
           if (toInsert.length > 0) {
