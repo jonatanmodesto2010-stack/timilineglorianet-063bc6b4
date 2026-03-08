@@ -13,6 +13,7 @@ import { ClientPriorityList } from '@/components/ClientPriorityList';
 import { CollectionActionsWidget } from '@/components/CollectionActionsWidget';
 import { AgreementsOverdueWidget } from '@/components/AgreementsOverdueWidget';
 import { DelinquentsExport } from '@/components/DelinquentsExport';
+import { DashboardDateFilter, type DateRange } from '@/components/DashboardDateFilter';
 
 interface BoletoData {
   timeline_id: string;
@@ -26,6 +27,7 @@ const Dashboard = () => {
   const [allTimelines, setAllTimelines] = useState<ClientTimeline[]>([]);
   const [boletos, setBoletos] = useState<BoletoData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null, label: 'Todo período' });
   const { organizationId } = useUserRole();
   const navigate = useNavigate();
 
@@ -64,6 +66,14 @@ const Dashboard = () => {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
+  const filteredBoletos = useMemo(() => {
+    if (!dateRange.from || !dateRange.to) return boletos;
+    return boletos.filter(b => {
+      const d = new Date(b.due_date + 'T00:00:00');
+      return d >= dateRange.from! && d <= dateRange.to!;
+    });
+  }, [boletos, dateRange]);
+
   const stats = useMemo(() => {
     const grouped = groupTimelinesByClient(allTimelines);
     const total = grouped.length;
@@ -76,7 +86,7 @@ const Dashboard = () => {
     today.setHours(0, 0, 0, 0);
 
     // Boleto calculations
-    const pendingBoletos = boletos.filter(b => b.status !== 'pago' && b.status !== 'cancelado');
+    const pendingBoletos = filteredBoletos.filter(b => b.status !== 'pago' && b.status !== 'cancelado');
     const overdueBoletos = pendingBoletos.filter(b => {
       const d = new Date(b.due_date); d.setHours(0, 0, 0, 0);
       return today.getTime() > d.getTime();
@@ -89,7 +99,7 @@ const Dashboard = () => {
     const totalOverdueValue = overdueBoletos.reduce((s, b) => s + (Number(b.boleto_value) || 0), 0);
     const totalUpcomingValue = upcomingBoletos.reduce((s, b) => s + (Number(b.boleto_value) || 0), 0);
     const totalReceivable = totalOverdueValue + totalUpcomingValue;
-    const paidBoletos = boletos.filter(b => b.status === 'pago');
+    const paidBoletos = filteredBoletos.filter(b => b.status === 'pago');
     const totalPaidValue = paidBoletos.reduce((s, b) => s + (Number(b.boleto_value) || 0), 0);
 
     // Delinquency rate
@@ -128,7 +138,7 @@ const Dashboard = () => {
       delinquencyRate, avgOverdueDays, blockRate,
       aging, agingCount,
     };
-  }, [allTimelines, boletos]);
+  }, [allTimelines, filteredBoletos]);
 
   const agingChartData = [
     { name: '1-30d', value: stats.aging['1-30'], count: stats.agingCount['1-30'], fill: 'hsl(48 96% 53%)' },
@@ -172,7 +182,12 @@ const Dashboard = () => {
                 <h2 className="text-2xl font-bold text-foreground">Dashboard de Cobrança</h2>
                 <p className="text-muted-foreground">Visão geral financeira e métricas de cobrança</p>
               </motion.div>
-              {!loading && <DelinquentsExport timelines={allTimelines} boletos={boletos} />}
+              {!loading && (
+                <div className="flex items-center gap-2">
+                  <DashboardDateFilter value={dateRange} onChange={setDateRange} />
+                  <DelinquentsExport timelines={allTimelines} boletos={boletos} />
+                </div>
+              )}
             </div>
 
             {loading ? (
