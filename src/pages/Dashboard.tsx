@@ -11,6 +11,7 @@ import { groupTimelinesByClient, type ClientTimeline } from '@/lib/client-utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RechartsPie, Pie } from 'recharts';
 import { ClientPriorityList } from '@/components/ClientPriorityList';
 import { CollectionActionsWidget } from '@/components/CollectionActionsWidget';
+import { AgreementsOverdueWidget } from '@/components/AgreementsOverdueWidget';
 
 interface BoletoData {
   timeline_id: string;
