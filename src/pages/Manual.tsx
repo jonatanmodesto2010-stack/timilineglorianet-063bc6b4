@@ -271,10 +271,10 @@ const Manual = () => {
                   <li><strong>Ações da régua de cobrança:</strong> Ações automáticas aparecem no calendário</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* DASHBOARD */}
-            <AccordionItem value="dashboard" className="border rounded-lg px-4">
+            {isVisible('dashboard') && <AccordionItem value="dashboard" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <LayoutDashboard className="h-5 w-5 text-primary" />
