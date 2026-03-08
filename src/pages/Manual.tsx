@@ -21,7 +21,9 @@ import {
 } from 'lucide-react';
 
 // Searchable section definitions
-const SECTIONS = [
+interface ManualSection { value: string; title: string; keywords: string; restricted?: string; }
+
+const SECTIONS: ManualSection[] = [
   { value: 'visao-geral', title: 'Visão Geral do Sistema', keywords: 'visão geral sistema plataforma gestão cobranças recursos perfis acesso viewer member admin owner super' },
   { value: 'clientes', title: 'Clientes', keywords: 'clientes adicionar novo busca filtros status tags ordenação prioridade detalhes boletos acordos concluir arquivar reativar timeline' },
   { value: 'timeline', title: 'Timeline de Cobrança', keywords: 'timeline cobrança eventos linhas criar evento ícone data horário descrição posição status criado resolvido sem resposta' },
@@ -34,7 +36,7 @@ const SECTIONS = [
   { value: 'configuracoes', title: 'Configurações', keywords: 'configurações perfil usuários adicionar editar remover geral paleta cores tags ícones integrações ixc sincronização régua cobrança regras histórico auditoria', restricted: 'admin' },
   { value: 'superadmin', title: 'Painel Super Admin', keywords: 'super admin organizações criar plano suspender ativar expiração membros estatísticas', restricted: 'superadmin' },
   { value: 'dicas', title: 'Dicas e Boas Práticas', keywords: 'dicas boas práticas organização cobrança efetiva sincronização ixc segurança papéis viewers owners' },
-] as Section[];
+];
 
 const Manual = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
