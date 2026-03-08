@@ -337,6 +337,8 @@ const Dashboard = () => {
                     </motion.div>
                   ))}
                 </div>
+
+                <ClientPriorityList timelines={allTimelines} boletos={boletos} />
               </>
             )}
           </div>
