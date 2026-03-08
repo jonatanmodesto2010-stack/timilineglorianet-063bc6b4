@@ -532,16 +532,9 @@ export const ClientDashboardModal = ({
                         return (
                           <TableRow key={boleto.id || `new-${index}`} className="hover:bg-muted/30">
                             <TableCell className="p-2">
-                              <Input
-                                type="date"
-                                value={boleto.due_date}
-                                onChange={(e) => {
-                                  const updated = [...boletos];
-                                  updated[index].due_date = e.target.value;
-                                  setBoletos(updated);
-                                }}
-                                className="h-8 bg-background text-sm"
-                              />
+                              <span className="text-sm text-foreground">
+                                {boleto.due_date ? new Date(boleto.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '–'}
+                              </span>
                             </TableCell>
                             <TableCell className="p-2">
                               <Input
