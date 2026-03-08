@@ -63,11 +63,11 @@ export const AgreementsOverdueWidget = () => {
         .select('id, client_name')
         .in('id', timelineIds);
 
-      const agMap = new Map(agreements.map((a: any) => [a.id, a]));
-      const nameMap = new Map((timelines || []).map((t: any) => [t.id, t.client_name]));
+      const agMap = new Map(agreements.map((a: any) => [a.id, a as { id: string; timeline_id: string; agreed_value: number }]));
+      const nameMap = new Map((timelines || []).map((t: any) => [t.id, t.client_name as string]));
 
       setOverdueItems(installments.map((inst: any) => {
-        const ag = agMap.get(inst.agreement_id);
+        const ag = agMap.get(inst.agreement_id) as { id: string; timeline_id: string; agreed_value: number } | undefined;
         return {
           ...inst,
           client_name: ag ? nameMap.get(ag.timeline_id) || 'Cliente' : 'Cliente',

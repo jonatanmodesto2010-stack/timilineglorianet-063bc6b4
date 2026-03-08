@@ -341,6 +341,7 @@ const Dashboard = () => {
                 </div>
 
                 <CollectionActionsWidget />
+                <AgreementsOverdueWidget />
                 <ClientPriorityList timelines={allTimelines} boletos={boletos} />
               </>
             )}
