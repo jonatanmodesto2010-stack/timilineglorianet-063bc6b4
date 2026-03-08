@@ -661,23 +661,50 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string | null
+          custom_domain: string | null
           events_per_line_limit: number
           id: string
+          logo_url: string | null
+          max_clients: number
+          max_users: number
           name: string
+          plan: string
+          primary_color: string | null
+          status: string
+          subscription_expires_at: string | null
+          suspended_at: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          custom_domain?: string | null
           events_per_line_limit?: number
           id?: string
+          logo_url?: string | null
+          max_clients?: number
+          max_users?: number
           name: string
+          plan?: string
+          primary_color?: string | null
+          status?: string
+          subscription_expires_at?: string | null
+          suspended_at?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          custom_domain?: string | null
           events_per_line_limit?: number
           id?: string
+          logo_url?: string | null
+          max_clients?: number
+          max_users?: number
           name?: string
+          plan?: string
+          primary_color?: string | null
+          status?: string
+          subscription_expires_at?: string | null
+          suspended_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -946,9 +973,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_org_client_limit: { Args: { _org_id: string }; Returns: boolean }
+      check_org_user_limit: { Args: { _org_id: string }; Returns: boolean }
       generate_client_sequential_id: {
         Args: { org_id: string }
         Returns: string
+      }
+      get_organization_stats: {
+        Args: { _org_id: string }
+        Returns: {
+          total_active_clients: number
+          total_clients: number
+          total_users: number
+        }[]
       }
       get_organization_users: {
         Args: { _org_id: string }
