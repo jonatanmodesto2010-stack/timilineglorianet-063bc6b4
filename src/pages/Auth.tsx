@@ -29,7 +29,7 @@ const Auth = () => {
     if (resetParam === 'true') {
       setIsResetMode(true);
       setIsForgotPassword(false);
-      setIsLogin(false);
+      // isLogin is always true now (no public signup)
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
