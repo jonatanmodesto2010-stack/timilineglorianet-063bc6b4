@@ -182,7 +182,7 @@ const Auth = () => {
           title: 'Cadastro realizado!',
           description: 'Você já pode fazer login.',
         });
-        setIsLogin(true);
+        // signup disabled
       }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
