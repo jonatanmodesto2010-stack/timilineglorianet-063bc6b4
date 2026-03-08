@@ -726,8 +726,8 @@ Deno.serve(async (req) => {
           await updateSyncLog(supabase, syncId, {
             status: 'completed',
             completed_at: new Date().toISOString(),
-            records_created: (orgResult.clients_inserted || 0) + (orgResult.boletos_inserted || 0),
-            records_updated: (orgResult.clients_updated || 0) + (orgResult.boletos_updated || 0),
+            records_created: (orgResult.clients_inserted || 0) + (orgResult.boletos_inserted || 0) + (orgResult.clients_discovered || 0),
+            records_updated: (orgResult.clients_updated || 0) + (orgResult.boletos_updated || 0) + (orgResult.debt_updated || 0),
           });
         }
       } catch (e: any) {
