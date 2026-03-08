@@ -338,25 +338,21 @@ const Clients = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <motion.button
+                    <button
                       onClick={() => navigate('/history')}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap"
+                      className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap hover-scale"
                     >
                       <History size={18} />
                       Histórico
-                    </motion.button>
+                    </button>
 
-                    <motion.button
+                    <button
                       onClick={() => setNewClientModalOpen(true)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap"
+                      className="px-6 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap hover-scale"
                     >
                       <Plus size={18} />
                       Novo Cliente
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
 
