@@ -1,4 +1,4 @@
-import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen, CheckCircle2, CreditCard } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_NAME, APP_VERSION, BUILD_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
@@ -23,6 +23,7 @@ const menuItems = [
   { icon: Calendar, label: 'Calendário', path: '/calendar' },
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: BarChart3, label: 'Relatórios', path: '/reports' },
+  { icon: CreditCard, label: 'Assinatura', path: '/subscription' },
   { icon: Settings, label: 'Configurações', path: '/settings' },
   { icon: BookOpen, label: 'Manual', path: '/manual' },
 ];

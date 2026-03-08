@@ -22,6 +22,10 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminOrganizations = React.lazy(() => import("./pages/admin/AdminOrganizations"));
 const AdminOrganizationDetail = React.lazy(() => import("./pages/admin/AdminOrganizationDetail"));
+const AdminPlans = React.lazy(() => import("./pages/admin/AdminPlans"));
+const AdminSubscriptions = React.lazy(() => import("./pages/admin/AdminSubscriptions"));
+const AdminInvoices = React.lazy(() => import("./pages/admin/AdminInvoices"));
+const SubscriptionPage = React.lazy(() => import("./pages/Subscription"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +62,10 @@ const AppContent = () => {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/organizations" element={<AdminOrganizations />} />
           <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
+          <Route path="/admin/plans" element={<AdminPlans />} />
+          <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+          <Route path="/admin/invoices" element={<AdminInvoices />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
