@@ -11,6 +11,7 @@ import { IconsManagement } from '@/components/settings/IconsManagement';
 import { HistorySettings } from '@/components/settings/HistorySettings';
 import { ColorThemeSettings } from '@/components/settings/ColorThemeSettings';
 import { CollectionRulesSettings } from '@/components/settings/CollectionRulesSettings';
+import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 
