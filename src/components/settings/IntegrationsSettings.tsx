@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, RefreshCw, Square, AlertTriangle } from 'lucide-react';
+import { SyncHistory } from './SyncHistory';
 
 interface Integration {
   id: string;
@@ -372,6 +373,8 @@ export const IntegrationsSettings = () => {
           )}
         </div>
       </div>
+
+      {integration && <SyncHistory />}
     </div>
   );
 };
