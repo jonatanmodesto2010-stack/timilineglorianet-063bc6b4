@@ -101,6 +101,9 @@ const Settings = () => {
                 <TabsContent value="collection">
                   <CollectionRulesSettings />
                 </TabsContent>
+                <TabsContent value="integrations">
+                  <IntegrationsSettings />
+                </TabsContent>
               </>
             )}
 
