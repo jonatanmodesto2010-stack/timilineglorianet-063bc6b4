@@ -364,14 +364,25 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Get existing timelines for this org
-          const { data: existingTimelines } = await supabase
-            .from('client_timelines')
-            .select('id, client_id, client_name, is_active, status, ixc_filial_id')
-            .eq('organization_id', organization_id);
+          // Get ALL existing timelines for this org (paginated to bypass 1000-row limit)
+          const existingTimelines: any[] = [];
+          let existingFrom = 0;
+          const PAGE_SIZE = 1000;
+          while (true) {
+            const { data: page } = await supabase
+              .from('client_timelines')
+              .select('id, client_id, client_name, is_active, status, ixc_filial_id')
+              .eq('organization_id', organization_id)
+              .range(existingFrom, existingFrom + PAGE_SIZE - 1);
+            if (!page || page.length === 0) break;
+            existingTimelines.push(...page);
+            if (page.length < PAGE_SIZE) break;
+            existingFrom += PAGE_SIZE;
+          }
+          console.log(`[sync] Loaded ${existingTimelines.length} existing timelines from DB`);
 
           const existingMap = new Map<string, any>();
-          for (const t of (existingTimelines || [])) {
+          for (const t of existingTimelines) {
             if (t.client_id) existingMap.set(t.client_id, t);
           }
 
