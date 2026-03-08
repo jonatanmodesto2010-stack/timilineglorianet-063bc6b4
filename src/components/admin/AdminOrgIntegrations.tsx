@@ -98,6 +98,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
   const [testing, setTesting] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [activeSyncAction, setActiveSyncAction] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastProgressTimeRef = useRef<number>(0);
   const { toast } = useToast();
