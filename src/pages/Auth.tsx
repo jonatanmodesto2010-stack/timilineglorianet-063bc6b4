@@ -68,7 +68,7 @@ const Auth = () => {
       });
       
       setIsForgotPassword(false);
-      setIsLogin(true);
+      // back to login view
       setEmail('');
     } catch (error: any) {
       if (error instanceof z.ZodError) {
