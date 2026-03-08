@@ -547,6 +547,75 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string | null
+          discount_amount: number | null
+          due_date: string
+          final_amount: number
+          gateway_invoice_id: string | null
+          gateway_payment_url: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          paid_at: string | null
+          reference_month: string | null
+          status: string
+          subscription_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          discount_amount?: number | null
+          due_date: string
+          final_amount: number
+          gateway_invoice_id?: string | null
+          gateway_payment_url?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          paid_at?: string | null
+          reference_month?: string | null
+          status?: string
+          subscription_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          discount_amount?: number | null
+          due_date?: string
+          final_amount?: number
+          gateway_invoice_id?: string | null
+          gateway_payment_url?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          reference_month?: string | null
+          status?: string
+          subscription_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "organization_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_filters: {
         Row: {
           filter_data: Json
@@ -664,6 +733,81 @@ export type Database = {
           },
         ]
       }
+      organization_subscriptions: {
+        Row: {
+          canceled_at: string | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          discount_percent: number | null
+          gateway_customer_id: string | null
+          gateway_subscription_id: string | null
+          id: string
+          monthly_price: number
+          notes: string | null
+          organization_id: string
+          payment_gateway: string | null
+          plan_id: string
+          status: string
+          suspended_at: string | null
+          trial_ends_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          discount_percent?: number | null
+          gateway_customer_id?: string | null
+          gateway_subscription_id?: string | null
+          id?: string
+          monthly_price?: number
+          notes?: string | null
+          organization_id: string
+          payment_gateway?: string | null
+          plan_id: string
+          status?: string
+          suspended_at?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          discount_percent?: number | null
+          gateway_customer_id?: string | null
+          gateway_subscription_id?: string | null
+          id?: string
+          monthly_price?: number
+          notes?: string | null
+          organization_id?: string
+          payment_gateway?: string | null
+          plan_id?: string
+          status?: string
+          suspended_at?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
@@ -711,6 +855,111 @@ export type Database = {
           status?: string
           subscription_expires_at?: string | null
           suspended_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          gateway_transaction_id: string | null
+          id: string
+          invoice_id: string
+          notes: string | null
+          organization_id: string
+          paid_at: string
+          payment_gateway: string | null
+          payment_method: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          organization_id: string
+          paid_at?: string
+          payment_gateway?: string | null
+          payment_method?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string
+          payment_gateway?: string | null
+          payment_method?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean
+          max_clients: number
+          max_users: number
+          monthly_price: number
+          name: string
+          slug: string
+          sort_order: number
+          trial_days: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_clients?: number
+          max_users?: number
+          monthly_price?: number
+          name: string
+          slug: string
+          sort_order?: number
+          trial_days?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_clients?: number
+          max_users?: number
+          monthly_price?: number
+          name?: string
+          slug?: string
+          sort_order?: number
+          trial_days?: number
           updated_at?: string | null
         }
         Relationships: []
