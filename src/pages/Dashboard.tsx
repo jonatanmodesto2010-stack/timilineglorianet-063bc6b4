@@ -66,6 +66,14 @@ const Dashboard = () => {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
+  const filteredBoletos = useMemo(() => {
+    if (!dateRange.from || !dateRange.to) return boletos;
+    return boletos.filter(b => {
+      const d = new Date(b.due_date + 'T00:00:00');
+      return d >= dateRange.from! && d <= dateRange.to!;
+    });
+  }, [boletos, dateRange]);
+
   const stats = useMemo(() => {
     const grouped = groupTimelinesByClient(allTimelines);
     const total = grouped.length;
