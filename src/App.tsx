@@ -17,6 +17,7 @@ const Settings = React.lazy(() => import("./pages/Settings"));
 const Profile = React.lazy(() => import("./pages/Profile"));
 const VisualTimeline = React.lazy(() => import("./pages/VisualTimeline"));
 const Reports = React.lazy(() => import("./pages/Reports"));
+const Manual = React.lazy(() => import("./pages/Manual"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminOrganizations = React.lazy(() => import("./pages/admin/AdminOrganizations"));
