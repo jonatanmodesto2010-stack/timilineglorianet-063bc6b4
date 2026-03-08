@@ -65,7 +65,7 @@ const Settings = () => {
                   <TabsTrigger value="colors">Paleta de Cores</TabsTrigger>
                   <TabsTrigger value="tags">Tags</TabsTrigger>
                   <TabsTrigger value="icons">Ícones</TabsTrigger>
-                   <TabsTrigger value="integrations">Integrações</TabsTrigger>
+                   
                    <TabsTrigger value="collection">Régua de Cobrança</TabsTrigger>
                 </>
               )}
