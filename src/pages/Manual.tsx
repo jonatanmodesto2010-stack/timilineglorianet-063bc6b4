@@ -89,14 +89,40 @@ const Manual = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap items-center gap-2 mb-6">
           <Badge variant="outline" className="gap-1"><Eye className="h-3 w-3" /> Todos</Badge>
           {canManageUsers && <Badge variant="secondary" className="gap-1"><Lock className="h-3 w-3" /> Admin</Badge>}
           {isSuperAdmin && <Badge className="gap-1"><Shield className="h-3 w-3" /> Super Admin</Badge>}
         </div>
 
-        <ScrollArea className="h-[calc(100vh-220px)]">
-          <Accordion type="multiple" defaultValue={["visao-geral"]} className="space-y-2">
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar no manual... (ex: boleto, acordo, IXC, tags)"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 pr-9"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {searchTerm && filteredSections.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            <p className="font-medium">Nenhum resultado encontrado</p>
+            <p className="text-sm">Tente buscar por outro termo</p>
+          </div>
+        )}
+
+        <ScrollArea className="h-[calc(100vh-320px)]">
+          <Accordion type="multiple" value={openValues} className="space-y-2">
 
             {/* VISÃO GERAL */}
             <AccordionItem value="visao-geral" className="border rounded-lg px-4">
