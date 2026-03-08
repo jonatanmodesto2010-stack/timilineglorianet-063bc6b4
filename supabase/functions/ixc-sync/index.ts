@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
       const orgResult: any = { organization_id, clients: 0, boletos: 0, errors: [] };
 
       // Create sync log entry
-      const syncType = action === 'sync_boletos' ? 'boletos' : action === 'sync_clients' ? 'clients' : action === 'check_blocked' ? 'blocked_check' : 'full';
+      const syncType = action === 'sync_boletos' ? 'boletos' : action === 'sync_clients' ? 'clients' : action === 'sync_areceber' ? 'areceber' : action === 'check_blocked' ? 'blocked_check' : 'full';
       const { data: syncLog } = await supabase
         .from('integration_sync_log')
         .insert({
