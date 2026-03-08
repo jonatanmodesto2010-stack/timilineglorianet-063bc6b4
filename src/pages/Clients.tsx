@@ -366,12 +366,9 @@ const Clients = () => {
                     {paginatedClients.map((client, index) => {
                       const info = getClientBadgeInfo(client);
                       return (
-                        <motion.div
+                        <div
                           key={client.primaryTimeline.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: Math.min(index * 0.03, 0.3) }}
-                          className={`w-full rounded-lg p-4 flex items-center gap-4 transition-colors hover:opacity-90 cursor-pointer ${getCardStyle(info)}`}
+                          className={`w-full rounded-lg p-4 flex items-center gap-4 transition-all duration-150 hover:opacity-90 cursor-pointer ${getCardStyle(info)}`}
                           onClick={() => handleOpenModal(client)}
                         >
                           <div className="flex-1 min-w-0">
