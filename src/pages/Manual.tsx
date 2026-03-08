@@ -127,7 +127,7 @@ const Manual = () => {
           <Accordion type="multiple" value={openValues} className="space-y-2">
 
             {/* VISÃO GERAL */}
-            <AccordionItem value="visao-geral" className="border rounded-lg px-4">
+            {isVisible('visao-geral') && <AccordionItem value="visao-geral" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-primary" />
