@@ -250,8 +250,14 @@ Deno.serve(async (req) => {
           let blockedIds = new Set<string>();
           try {
             const blocked = await fetchAllIxcRecords(api_url, token, 'cliente_bloqueado');
+            console.log(`Blocked clients from IXC: ${blocked.length}`);
+            if (blocked.length > 0) {
+              console.log(`Sample blocked: ${JSON.stringify(blocked[0])}`);
+            }
             blockedIds = new Set(blocked.map((b: any) => String(b.id_cliente)));
+            console.log(`Blocked IDs set size: ${blockedIds.size}`);
           } catch (e) {
+            console.error(`Error fetching blocked: ${e.message}`);
             orgResult.errors.push(`Erro ao buscar bloqueados: ${e.message}`);
           }
 
