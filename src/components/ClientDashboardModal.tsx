@@ -135,7 +135,7 @@ export const ClientDashboardModal = ({
   const loadAnalysisHistory = async () => {
     const { data, error } = await supabase
       .from('client_analysis_history')
-      .select('*')
+      .select('id, timeline_id, analysis_data, risk_score, risk_level, created_at')
       .eq('timeline_id', client.id)
       .order('created_at', { ascending: false })
       .limit(5);
