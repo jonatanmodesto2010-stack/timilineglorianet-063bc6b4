@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, History, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2, Wifi, WifiOff } from 'lucide-react';
+import { Plus, History, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2, Wifi, WifiOff, ArrowDownUp } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { ClientDashboardModal } from '@/components/ClientDashboardModal';
 import { ClientSearchFilters } from '@/components/ClientSearchFilters';
@@ -46,6 +46,7 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [filialFilter, setFilialFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<'default' | 'overdue_desc' | 'overdue_asc'>('default');
   const [filiais, setFiliais] = useState<[string, string][]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -230,6 +231,16 @@ const Clients = () => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, filialFilter]);
 
+  // Sort clients based on sortBy option
+  const sortedClients = useMemo(() => {
+    if (sortBy === 'default') return clients;
+    return [...clients].sort((a, b) => {
+      const daysA = overdueDaysMap.get(a.id) || 0;
+      const daysB = overdueDaysMap.get(b.id) || 0;
+      return sortBy === 'overdue_desc' ? daysB - daysA : daysA - daysB;
+    });
+  }, [clients, overdueDaysMap, sortBy]);
+
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -394,6 +405,17 @@ const Clients = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                      <SelectTrigger className="w-[200px] h-9">
+                        <ArrowDownUp className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Ordenação" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Ordenação padrão</SelectItem>
+                        <SelectItem value="overdue_desc">Maior atraso primeiro</SelectItem>
+                        <SelectItem value="overdue_asc">Menor atraso primeiro</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <button
                       onClick={() => navigate('/history')}
                       className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap"
@@ -419,7 +441,7 @@ const Clients = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2 w-full">
-                    {clients.map((client) => {
+                    {sortedClients.map((client) => {
                       const info = getClientBadgeInfo(client);
                       return (
                         <div
