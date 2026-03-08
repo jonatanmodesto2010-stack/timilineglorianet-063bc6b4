@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { AIAnalysisSection } from './AIAnalysisSection';
+import { ClientAgreements } from './ClientAgreements';
 import { ClientTimelineDialog } from './ClientTimelineDialog';
 import { formatCurrency, formatDate } from '@/lib/metrics-calculator';
 import { normalizeDisplayDate, formatDateTimeBR } from '@/lib/date-utils';
