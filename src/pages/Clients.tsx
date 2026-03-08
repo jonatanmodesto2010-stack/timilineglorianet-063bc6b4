@@ -104,8 +104,8 @@ const Clients = () => {
       setLoading(true);
 
       // Build server-side query
-      let query = supabaseClient
-        .from('client_timelines')
+      let query = (supabaseClient as any)
+        .from('unique_client_timelines')
         .select(CLIENT_COLUMNS, { count: 'exact' })
         .eq('organization_id', organizationId);
 
