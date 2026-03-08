@@ -61,7 +61,8 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
       const { data: timelines } = await supabaseClient
         .from('client_timelines')
         .select('id, client_name')
-        .eq('organization_id', organizationId);
+        .eq('organization_id', organizationId)
+        .eq('is_active', true);
 
       if (!timelines || timelines.length === 0) {
         setEvents([]);
