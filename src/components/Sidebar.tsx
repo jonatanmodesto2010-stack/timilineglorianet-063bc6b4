@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Settings, Users, X, ChevronLeft, ChevronRight, LayoutDashboard } from 'lucide-react';
+import { Calendar, Settings, Users, X, ChevronLeft, ChevronRight, LayoutDashboard, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_NAME, getFullVersion, BUILD_VERSION } from '@/config/version';
@@ -18,6 +18,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { icon: Users, label: 'Clientes', path: '/clients', active: location.pathname === '/clients' || location.pathname === '/' },
     { icon: Calendar, label: 'Calendário', path: '/calendar', active: location.pathname === '/calendar' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', active: location.pathname === '/dashboard' },
+    { icon: BarChart3, label: 'Relatórios', path: '/reports', active: location.pathname === '/reports' },
     { icon: Settings, label: 'Configurações', path: '/settings', active: location.pathname === '/settings' },
   ];
 
