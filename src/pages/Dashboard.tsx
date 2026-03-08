@@ -27,6 +27,7 @@ const Dashboard = () => {
   const [allTimelines, setAllTimelines] = useState<ClientTimeline[]>([]);
   const [boletos, setBoletos] = useState<BoletoData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null, label: 'Todo período' });
   const { organizationId } = useUserRole();
   const navigate = useNavigate();
 
