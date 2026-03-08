@@ -625,6 +625,17 @@ export const ClientDashboardModal = ({
 
             <Separator />
 
+            {/* Agreements Section */}
+            <div className="space-y-4">
+              <ClientAgreements
+                timelineId={client.id}
+                organizationId={client.organization_id || ''}
+                clientName={client.client_name}
+              />
+            </div>
+
+            <Separator />
+
             {/* Tags Section */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-purple-400 flex items-center gap-2">
