@@ -26,7 +26,7 @@ async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string
   };
 
   const res = await fetch(url, {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Basic ${encodedToken}`,
