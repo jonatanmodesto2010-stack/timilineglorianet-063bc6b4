@@ -158,7 +158,7 @@ const Clients = () => {
     }
 
     return results;
-  }, [groupedClients, searchTerm, statusFilter, overdueDaysMap]);
+  }, [groupedClients, searchTerm, statusFilter, overdueDaysMap, filialFilter]);
 
   // Reset page on filter change
   useEffect(() => {
