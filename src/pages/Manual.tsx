@@ -160,7 +160,7 @@ const Manual = () => {
             </AccordionItem>}
 
             {/* CLIENTES */}
-            <AccordionItem value="clientes" className="border rounded-lg px-4">
+            {isVisible('clientes') && <AccordionItem value="clientes" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
