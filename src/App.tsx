@@ -22,6 +22,10 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminOrganizations = React.lazy(() => import("./pages/admin/AdminOrganizations"));
 const AdminOrganizationDetail = React.lazy(() => import("./pages/admin/AdminOrganizationDetail"));
+const AdminPlans = React.lazy(() => import("./pages/admin/AdminPlans"));
+const AdminSubscriptions = React.lazy(() => import("./pages/admin/AdminSubscriptions"));
+const AdminInvoices = React.lazy(() => import("./pages/admin/AdminInvoices"));
+const SubscriptionPage = React.lazy(() => import("./pages/Subscription"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
