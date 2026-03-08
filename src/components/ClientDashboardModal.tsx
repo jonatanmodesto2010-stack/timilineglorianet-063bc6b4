@@ -112,7 +112,7 @@ export const ClientDashboardModal = ({
 
     const { data, error } = await supabase
       .from('tags')
-      .select('*')
+      .select('id, name, color')
       .eq('organization_id', client.organization_id)
       .order('name');
 
