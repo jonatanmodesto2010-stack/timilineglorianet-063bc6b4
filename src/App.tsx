@@ -53,6 +53,7 @@ const AppContent = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/visual-timeline" element={<VisualTimeline />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/manual" element={<Manual />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/organizations" element={<AdminOrganizations />} />

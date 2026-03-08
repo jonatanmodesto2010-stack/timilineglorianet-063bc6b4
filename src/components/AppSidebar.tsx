@@ -20,6 +20,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: BarChart3, label: 'Relatórios', path: '/reports' },
   { icon: Settings, label: 'Configurações', path: '/settings' },
+  { icon: BookOpen, label: 'Manual', path: '/manual' },
 ];
 
 export function AppSidebar() {
