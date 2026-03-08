@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Check, Calendar, DollarSign, Tag as TagIcon, User, Clock, Plus, Trash2, TrendingUp } from 'lucide-react';
+import { X, Check, Calendar, DollarSign, Tag as TagIcon, User, Clock, Plus, Trash2, TrendingUp, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { AIAnalysisSection } from './AIAnalysisSection';
+import { ClientAgreements } from './ClientAgreements';
 import { ClientTimelineDialog } from './ClientTimelineDialog';
 import { formatCurrency, formatDate } from '@/lib/metrics-calculator';
 import { normalizeDisplayDate, formatDateTimeBR } from '@/lib/date-utils';
@@ -620,6 +621,17 @@ export const ClientDashboardModal = ({
                   </div>
                 </div>
               )}
+            </div>
+
+            <Separator />
+
+            {/* Agreements Section */}
+            <div className="space-y-4">
+              <ClientAgreements
+                timelineId={client.id}
+                organizationId={client.organization_id || ''}
+                clientName={client.client_name}
+              />
             </div>
 
             <Separator />

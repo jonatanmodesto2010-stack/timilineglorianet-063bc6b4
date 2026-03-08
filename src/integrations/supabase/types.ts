@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      agreement_installments: {
+        Row: {
+          agreement_id: string
+          created_at: string | null
+          due_date: string
+          id: string
+          installment_number: number
+          paid_at: string | null
+          status: string
+          value: number
+        }
+        Insert: {
+          agreement_id: string
+          created_at?: string | null
+          due_date: string
+          id?: string
+          installment_number: number
+          paid_at?: string | null
+          status?: string
+          value: number
+        }
+        Update: {
+          agreement_id?: string
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          installment_number?: number
+          paid_at?: string | null
+          status?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_installments_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "client_agreements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_versions: {
         Row: {
           build_time: string
@@ -81,6 +122,66 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_agreements: {
+        Row: {
+          agreed_value: number
+          created_at: string | null
+          created_by: string | null
+          discount_percent: number | null
+          id: string
+          installments_count: number
+          notes: string | null
+          organization_id: string
+          original_debt: number
+          status: string
+          timeline_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          agreed_value: number
+          created_at?: string | null
+          created_by?: string | null
+          discount_percent?: number | null
+          id?: string
+          installments_count?: number
+          notes?: string | null
+          organization_id: string
+          original_debt: number
+          status?: string
+          timeline_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          agreed_value?: number
+          created_at?: string | null
+          created_by?: string | null
+          discount_percent?: number | null
+          id?: string
+          installments_count?: number
+          notes?: string | null
+          organization_id?: string
+          original_debt?: number
+          status?: string
+          timeline_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_agreements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_agreements_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "client_timelines"
             referencedColumns: ["id"]
           },
         ]
