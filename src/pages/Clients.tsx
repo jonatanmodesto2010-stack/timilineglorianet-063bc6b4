@@ -46,6 +46,7 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [filialFilter, setFilialFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<'default' | 'overdue_desc' | 'overdue_asc'>('default');
   const [filiais, setFiliais] = useState<[string, string][]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
