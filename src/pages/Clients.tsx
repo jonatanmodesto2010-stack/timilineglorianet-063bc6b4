@@ -286,7 +286,7 @@ const Clients = () => {
           <div className="max-w-7xl mx-auto flex gap-6">
             {/* Left Column - Client List */}
             <div className="flex-1 min-w-0">
-              <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="animate-fade-in">
                 <div className="flex items-center gap-4 mb-6">
                   <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
                   {filiais.length > 0 && (
