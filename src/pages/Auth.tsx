@@ -376,7 +376,6 @@ const Auth = () => {
                     type="button"
                     onClick={() => {
                       setIsForgotPassword(true);
-                      setIsLogin(false);
                       setErrors({});
                     }}
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
