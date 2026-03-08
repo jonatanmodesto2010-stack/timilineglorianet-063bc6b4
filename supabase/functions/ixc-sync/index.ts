@@ -473,7 +473,8 @@ Deno.serve(async (req) => {
             }
           }
 
-          console.log(`Status summary: ${blockedCount} blocked, ${toInsert.length} to insert, ${updateIds.length} to update`);
+          console.log(`[sync] Classification: ${activeCount} active, ${blockedCount} blocked (endpoint: ${blockedFromEndpointCount}, contract: ${blockedFromContractCount}, client_field: ${blockedFromClientFieldCount}), ${archivedCount} archived`);
+          console.log(`[sync] DB changes: ${toInsert.length} to insert, ${updateIds.length} to update`);
 
           // Batch insert
           if (toInsert.length > 0) {
