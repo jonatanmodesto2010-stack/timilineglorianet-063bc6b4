@@ -353,22 +353,14 @@ const Calendar = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <Header 
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
-        
-        <div className="flex flex-1 w-full">
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-6xl mx-auto">
-              <div className="h-9 w-64 bg-muted animate-pulse rounded mb-6" />
-              <div className="h-96 bg-muted animate-pulse rounded-xl" />
-            </div>
-          </main>
+      <AppLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="h-9 w-64 bg-muted animate-pulse rounded mb-6" />
+            <div className="h-96 bg-muted animate-pulse rounded-xl" />
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
