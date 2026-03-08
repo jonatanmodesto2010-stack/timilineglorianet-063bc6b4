@@ -59,16 +59,16 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             : isOpen ? 0 : (isCollapsed ? -70 : -280)
         }}
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className={`fixed lg:sticky top-0 left-0 h-screen ${isCollapsed ? 'w-[70px]' : 'w-[280px]'} bg-card border-r border-border z-50 lg:z-30 flex flex-col transition-all duration-300`}
+        className={`fixed lg:sticky top-0 left-0 h-screen ${isCollapsed ? 'w-[72px]' : 'w-[280px]'} bg-card border-r border-border z-50 lg:z-30 flex flex-col transition-all duration-300`}
       >
         {/* Toggle Collapse Button - Desktop only */}
-        <div className="hidden lg:flex justify-end p-2 border-b border-border">
+        <div className={`hidden lg:flex ${isCollapsed ? 'justify-center' : 'justify-end'} p-2 border-b border-border`}>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-full transition-colors border border-border"
             title={isCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
           >
-            {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
 
@@ -83,8 +83,8 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 overflow-y-auto">
-          <div className="space-y-2">
+        <nav className={`flex-1 ${isCollapsed ? 'px-2' : 'px-4'} py-6 overflow-y-auto`}>
+          <div className={`${isCollapsed ? 'space-y-3' : 'space-y-2'}`}>
             {menuItems.map((item, index) => (
               <motion.button
                 key={item.label}
@@ -92,15 +92,16 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.03, x: 4 }}
+                whileHover={{ scale: 1.03, x: isCollapsed ? 0 : 4 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg transition-colors ${
+                title={isCollapsed ? item.label : undefined}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3'} rounded-xl transition-all ${
                   item.active
                     ? 'bg-primary text-primary-foreground shadow-lg'
                     : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <item.icon size={20} />
+                <item.icon size={isCollapsed ? 22 : 20} strokeWidth={item.active ? 2.5 : 2} />
                 {!isCollapsed && <span className="font-medium">{item.label}</span>}
               </motion.button>
             ))}
