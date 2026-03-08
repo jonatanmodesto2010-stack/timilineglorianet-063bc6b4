@@ -286,7 +286,7 @@ const Clients = () => {
         <main className="flex-1 p-4 overflow-hidden">
           <div className="h-full flex flex-col lg:flex-row gap-4">
             {/* Left Column - Client List */}
-            <div className="flex-1 min-w-0">
+            <div className="lg:w-[55%] flex flex-col min-w-0 overflow-hidden">
               <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex items-center gap-4 mb-6">
                   <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
