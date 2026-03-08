@@ -36,6 +36,7 @@ interface Client {
   due_date?: string | null;
   boleto_value?: string | null;
   is_active: boolean;
+  status?: string;
   created_at?: string;
   updated_at?: string;
   organization_id?: string;
