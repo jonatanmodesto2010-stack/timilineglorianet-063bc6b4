@@ -197,8 +197,35 @@ const Clients = () => {
       setOverdueDaysLoading(false);
     }
   };
+  const loadOnlineStatus = async (blockedClients: ClientTimeline[]) => {
+    try {
+      setOnlineLoading(true);
+      const clientIds = blockedClients.map(c => c.client_id).filter(Boolean);
+      if (clientIds.length === 0) {
+        setOnlineClients(new Set());
+        return;
+      }
 
-  // Reset page on filter change
+      const { data, error } = await supabase.functions.invoke('ixc-check-online', {
+        body: { organization_id: organizationId, client_ids: clientIds },
+      });
+
+      if (error) {
+        console.error('Error checking online status:', error);
+        return;
+      }
+
+      if (data?.online_clients) {
+        setOnlineClients(new Set(data.online_clients.map(String)));
+      }
+    } catch (err) {
+      console.error('Error loading online status:', err);
+    } finally {
+      setOnlineLoading(false);
+    }
+  };
+
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, filialFilter]);
