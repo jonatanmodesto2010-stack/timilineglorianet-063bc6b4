@@ -266,6 +266,127 @@ export type Database = {
           },
         ]
       }
+      collection_actions: {
+        Row: {
+          action_date: string
+          action_type: string
+          boleto_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          organization_id: string
+          rule_id: string | null
+          status: string
+          timeline_id: string
+        }
+        Insert: {
+          action_date: string
+          action_type: string
+          boleto_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          organization_id: string
+          rule_id?: string | null
+          status?: string
+          timeline_id: string
+        }
+        Update: {
+          action_date?: string
+          action_type?: string
+          boleto_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          organization_id?: string
+          rule_id?: string | null
+          status?: string
+          timeline_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_actions_boleto_id_fkey"
+            columns: ["boleto_id"]
+            isOneToOne: false
+            referencedRelation: "client_boletos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_actions_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "collection_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_actions_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "client_timelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_rules: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean
+          message_template: string | null
+          name: string
+          organization_id: string
+          sort_order: number
+          trigger_days: number
+          updated_at: string | null
+        }
+        Insert: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          message_template?: string | null
+          name: string
+          organization_id: string
+          sort_order?: number
+          trigger_days: number
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          message_template?: string | null
+          name?: string
+          organization_id?: string
+          sort_order?: number
+          trigger_days?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integration_sync_log: {
         Row: {
           completed_at: string | null
