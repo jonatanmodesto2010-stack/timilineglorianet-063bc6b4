@@ -353,10 +353,10 @@ const Manual = () => {
                   <li><Badge variant="secondary" className="text-xs bg-red-100 text-red-800">Cancelado</Badge> — Acordo foi cancelado</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* TAGS */}
-            <AccordionItem value="tags" className="border rounded-lg px-4">
+            {isVisible('tags') && <AccordionItem value="tags" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Tag className="h-5 w-5 text-primary" />
