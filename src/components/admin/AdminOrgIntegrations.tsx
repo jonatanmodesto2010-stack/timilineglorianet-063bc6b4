@@ -232,7 +232,8 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
           toast({ title: 'Erro na sincronização', description: data.error_message || 'Erro desconhecido', variant: 'destructive' });
         }
         setTimeout(() => {
-          setSyncProgress(null);
+           setSyncProgress(null);
+          setActiveSyncAction(null);
           loadSyncLogs();
         }, 3000);
       }
