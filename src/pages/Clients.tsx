@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, History, Loader2, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock } from 'lucide-react';
+import { Plus, History, Loader2, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { ClientDashboardModal } from '@/components/ClientDashboardModal';
@@ -18,6 +18,7 @@ import { fetchAllPaginated, fetchInChunks } from '@/lib/supabase-helpers';
 import { groupTimelinesByClient, sortClients, calculateOverdueDays, type ClientTimeline, type GroupedClient } from '@/lib/client-utils';
 import type { User } from '@supabase/supabase-js';
 import { ClientTimelineDialog } from '@/components/ClientTimelineDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ITEMS_PER_PAGE = 30;
 
@@ -42,6 +43,7 @@ const Clients = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [filialFilter, setFilialFilter] = useState('all');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -110,15 +112,30 @@ const Clients = () => {
     }
   };
 
+  // Extract unique filiais
+  const filiais = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of allTimelines) {
+      if (t.ixc_filial_id && t.ixc_filial_name) {
+        map.set(t.ixc_filial_id, t.ixc_filial_name);
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [allTimelines]);
+
   // Group and sort clients
   const groupedClients = useMemo(() => {
     const grouped = groupTimelinesByClient(allTimelines);
     return sortClients(grouped, overdueDaysMap);
   }, [allTimelines, overdueDaysMap]);
 
-  // Apply search/status filters
+  // Apply search/status/filial filters
   const filteredClients = useMemo(() => {
     let results = groupedClients;
+
+    if (filialFilter !== 'all') {
+      results = results.filter(c => c.primaryTimeline.ixc_filial_id === filialFilter);
+    }
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -141,12 +158,12 @@ const Clients = () => {
     }
 
     return results;
-  }, [groupedClients, searchTerm, statusFilter, overdueDaysMap]);
+  }, [groupedClients, searchTerm, statusFilter, overdueDaysMap, filialFilter]);
 
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, filialFilter]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredClients.length / ITEMS_PER_PAGE));
@@ -271,7 +288,23 @@ const Clients = () => {
             {/* Left Column - Client List */}
             <div className="flex-1 min-w-0">
               <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <h2 className="text-2xl font-bold text-foreground mb-6">Clientes</h2>
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
+                  {filiais.length > 0 && (
+                    <Select value={filialFilter} onValueChange={setFilialFilter}>
+                      <SelectTrigger className="w-[220px] h-9">
+                        <Building2 className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Todas filiais" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas filiais</SelectItem>
+                        {filiais.map(([id, name]) => (
+                          <SelectItem key={id} value={id}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
 
                 <ClientSearchFilters 
                   onFilterChange={(filters) => {
