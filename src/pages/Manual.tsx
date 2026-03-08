@@ -17,8 +17,24 @@ import {
   Users, Calendar, LayoutDashboard, BarChart3, Settings,
   Shield, BookOpen, Clock, Tag, Palette, Link2, FileText,
   UserPlus, Bell, Search, Filter, Plus, CheckCircle2,
-  AlertTriangle, Info, Zap, Lock, Eye
+  AlertTriangle, Info, Zap, Lock, Eye, X
 } from 'lucide-react';
+
+// Searchable section definitions
+const SECTIONS = [
+  { value: 'visao-geral', title: 'Visão Geral do Sistema', keywords: 'visão geral sistema plataforma gestão cobranças recursos perfis acesso viewer member admin owner super' },
+  { value: 'clientes', title: 'Clientes', keywords: 'clientes adicionar novo busca filtros status tags ordenação prioridade detalhes boletos acordos concluir arquivar reativar timeline' },
+  { value: 'timeline', title: 'Timeline de Cobrança', keywords: 'timeline cobrança eventos linhas criar evento ícone data horário descrição posição status criado resolvido sem resposta' },
+  { value: 'calendario', title: 'Calendário', keywords: 'calendário eventos mensal indicadores dia ações régua cobrança agendados' },
+  { value: 'dashboard', title: 'Dashboard', keywords: 'dashboard métricas indicadores clientes ativos valor aberto acordos vencidos ações pendentes filtros data período' },
+  { value: 'relatorios', title: 'Relatórios', keywords: 'relatórios exportação inadimplentes pdf filtros período dados cobrança' },
+  { value: 'acordos', title: 'Acordos e Negociações', keywords: 'acordos negociações dívida parcelas valor desconto pagamento vencidas cancelar ativo concluído' },
+  { value: 'tags', title: 'Tags e Categorização', keywords: 'tags categorização atribuir filtrar cobrança negociação jurídico prioritário vip criar editar excluir cor' },
+  { value: 'ia', title: 'Análise de Risco por IA', keywords: 'inteligência artificial ia risco score análise baixo médio alto crítico recomendações histórico estratégia' },
+  { value: 'configuracoes', title: 'Configurações', keywords: 'configurações perfil usuários adicionar editar remover geral paleta cores tags ícones integrações ixc sincronização régua cobrança regras histórico auditoria', restricted: 'admin' },
+  { value: 'superadmin', title: 'Painel Super Admin', keywords: 'super admin organizações criar plano suspender ativar expiração membros estatísticas', restricted: 'superadmin' },
+  { value: 'dicas', title: 'Dicas e Boas Práticas', keywords: 'dicas boas práticas organização cobrança efetiva sincronização ixc segurança papéis viewers owners' },
+] as const;
 
 const Manual = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
