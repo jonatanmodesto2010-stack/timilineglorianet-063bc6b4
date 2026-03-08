@@ -25,6 +25,8 @@ export const IntegrationsSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncingBoletos, setSyncingBoletos] = useState(false);
   const { organizationId } = useUserRole();
   const { toast } = useToast();
 
