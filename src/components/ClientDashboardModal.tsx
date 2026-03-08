@@ -505,96 +505,125 @@ export const ClientDashboardModal = ({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-                  {boletos.map((boleto, index) => {
-                    // Calcular dias de atraso
-                    const today = new Date();
-                    const dueDate = new Date(boleto.due_date);
-                    const diffTime = today.getTime() - dueDate.getTime();
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    const diasAtraso = diffDays > 0 ? diffDays : 0;
-                    
-                    return (
-                      <div
-                        key={boleto.id || `new-${index}`}
-                        className="p-4 bg-card/50 rounded-lg border border-border hover:border-orange-500/50 transition-colors"
-                      >
-                        <div className="space-y-3">
-                          <div>
-                            <Label className="text-xs text-foreground">Valor (R$) *</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={boleto.boleto_value}
-                              onChange={(e) => {
-                                const updated = [...boletos];
-                                updated[index].boleto_value = e.target.value;
-                                setBoletos(updated);
-                              }}
-                              placeholder="100"
-                              className="mt-1 bg-background"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-foreground">Vencimento *</Label>
-                            <Input
-                              type="date"
-                              value={boleto.due_date}
-                              onChange={(e) => {
-                                const updated = [...boletos];
-                                updated[index].due_date = e.target.value;
-                                setBoletos(updated);
-                              }}
-                              className="mt-1 bg-background"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-foreground">Status</Label>
-                            <div className="mt-1 p-2 bg-background rounded-md border border-input flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${
-                                boleto.status === 'pago' ? 'bg-green-500' :
-                                boleto.status === 'atrasado' ? 'bg-red-500' :
-                                boleto.status === 'cancelado' ? 'bg-gray-500' :
-                                'bg-yellow-500'
-                              }`} />
-                              <span className="text-sm">
-                                {boleto.status === 'pago' ? 'Pago' :
-                                 boleto.status === 'atrasado' ? `Atrasado ${diasAtraso > 0 ? `a ${diasAtraso} dias` : ''}` :
-                                 boleto.status === 'cancelado' ? 'Cancelado' :
-                                 'Pendente'}
-                              </span>
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-foreground">Descrição (opcional)</Label>
-                            <Input
-                              value={boleto.description || ''}
-                              onChange={(e) => {
-                                const updated = [...boletos];
-                                updated[index].description = e.target.value;
-                                setBoletos(updated);
-                              }}
-                              placeholder="Ex: Mensalidade de Abril"
-                              className="mt-1 bg-background"
-                            />
-                          </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              setBoletos(boletos.filter((_, i) => i !== index));
-                            }}
-                            className="w-full"
-                            type="button"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Remover
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="max-h-96 overflow-y-auto rounded-lg border border-border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="w-[140px]">Vencimento</TableHead>
+                        <TableHead className="w-[120px]">Valor (R$)</TableHead>
+                        <TableHead className="w-[150px]">Status</TableHead>
+                        <TableHead className="w-[80px] text-center">Dias Atraso</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {boletos.map((boleto, index) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const dueDate = new Date(boleto.due_date);
+                        dueDate.setHours(0, 0, 0, 0);
+                        const diffTime = today.getTime() - dueDate.getTime();
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        const diasAtraso = diffDays > 0 ? diffDays : 0;
+                        const isPaidOrCancelled = boleto.status === 'pago' || boleto.status === 'cancelado';
+
+                        return (
+                          <TableRow key={boleto.id || `new-${index}`} className="hover:bg-muted/30">
+                            <TableCell className="p-2">
+                              <Input
+                                type="date"
+                                value={boleto.due_date}
+                                onChange={(e) => {
+                                  const updated = [...boletos];
+                                  updated[index].due_date = e.target.value;
+                                  setBoletos(updated);
+                                }}
+                                className="h-8 bg-background text-sm"
+                              />
+                            </TableCell>
+                            <TableCell className="p-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={boleto.boleto_value}
+                                onChange={(e) => {
+                                  const updated = [...boletos];
+                                  updated[index].boleto_value = e.target.value;
+                                  setBoletos(updated);
+                                }}
+                                placeholder="0.00"
+                                className="h-8 bg-background text-sm"
+                              />
+                            </TableCell>
+                            <TableCell className="p-2">
+                              <Select
+                                value={boleto.status}
+                                onValueChange={(value) => {
+                                  const updated = [...boletos];
+                                  updated[index].status = value;
+                                  setBoletos(updated);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 bg-background text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                      boleto.status === 'pago' ? 'bg-green-500' :
+                                      boleto.status === 'atrasado' ? 'bg-red-500' :
+                                      boleto.status === 'cancelado' ? 'bg-gray-500' :
+                                      'bg-yellow-500'
+                                    }`} />
+                                    <SelectValue />
+                                  </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pendente">Pendente</SelectItem>
+                                  <SelectItem value="pago">Pago</SelectItem>
+                                  <SelectItem value="atrasado">Atrasado</SelectItem>
+                                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="p-2 text-center">
+                              {isPaidOrCancelled ? (
+                                <span className="text-muted-foreground">–</span>
+                              ) : diasAtraso > 0 ? (
+                                <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/30 text-xs">
+                                  {diasAtraso}d
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">0d</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="p-2">
+                              <Input
+                                value={boleto.description || ''}
+                                onChange={(e) => {
+                                  const updated = [...boletos];
+                                  updated[index].description = e.target.value;
+                                  setBoletos(updated);
+                                }}
+                                placeholder="Ex: Mensalidade"
+                                className="h-8 bg-background text-sm"
+                              />
+                            </TableCell>
+                            <TableCell className="p-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setBoletos(boletos.filter((_, i) => i !== index))}
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                type="button"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
 
