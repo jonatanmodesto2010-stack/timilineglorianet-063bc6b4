@@ -6,7 +6,7 @@ import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { ClientDashboardModal } from '@/components/ClientDashboardModal';
 import { ClientSearchFilters } from '@/components/ClientSearchFilters';
-import { CalendarWidget } from '@/components/CalendarWidget';
+import { CalendarPanel } from '@/components/CalendarPanel';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -261,13 +261,19 @@ const Clients = () => {
         <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <div className="flex flex-1 w-full">
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-7xl mx-auto">
-              <div className="h-9 w-48 bg-muted animate-pulse rounded mb-6" />
-              <div className="flex flex-col gap-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
-                ))}
+          <main className="flex-1 p-4 overflow-hidden">
+            <div className="h-full flex flex-col lg:flex-row gap-4">
+              <div className="lg:w-[55%] flex flex-col">
+                <div className="h-9 w-48 bg-muted animate-pulse rounded mb-4" />
+                <div className="flex flex-col gap-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-14 bg-muted animate-pulse rounded-lg" />
+                  ))}
+                </div>
+              </div>
+              <div className="lg:w-[45%] hidden lg:block">
+                <div className="h-8 w-48 bg-muted animate-pulse rounded mb-4" />
+                <div className="h-96 bg-muted animate-pulse rounded-xl" />
               </div>
             </div>
           </main>
@@ -283,10 +289,10 @@ const Clients = () => {
       <div className="flex flex-1 w-full">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto flex gap-6">
+        <main className="flex-1 p-4 overflow-hidden">
+          <div className="h-full flex flex-col lg:flex-row gap-4">
             {/* Left Column - Client List */}
-            <div className="flex-1 min-w-0">
+            <div className="lg:w-[55%] flex flex-col min-w-0 overflow-hidden">
               <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex items-center gap-4 mb-6">
                   <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
@@ -361,13 +367,14 @@ const Clients = () => {
                   </div>
                 </div>
 
-                {/* Client List */}
+                {/* Client List - Scrollable */}
+                <div className="flex-1 overflow-y-auto min-h-0">
                 {paginatedClients.length === 0 ? (
                   <div className="text-center py-20 text-muted-foreground">
                     <p>Nenhum cliente encontrado</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2 w-full">
+                  <div className="flex flex-col gap-2 w-full pr-1">
                     {paginatedClients.map((client, index) => {
                       const info = getClientBadgeInfo(client);
                       return (
@@ -432,12 +439,13 @@ const Clients = () => {
                     })}
                   </div>
                 )}
+                </div>
               </motion.div>
             </div>
 
-            {/* Right Column - Widgets */}
-            <div className="hidden lg:block w-[380px] flex-shrink-0 space-y-4">
-              <CalendarWidget 
+            {/* Right Column - Full Calendar */}
+            <div className="lg:w-[45%] flex-shrink-0 overflow-hidden lg:flex hidden flex-col">
+              <CalendarPanel
                 organizationId={organizationId}
                 onClientClick={(name) => setSearchTerm(name)}
               />
