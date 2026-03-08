@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,24 @@ interface CalendarWidgetProps {
   onClientClick?: (clientName: string) => void;
 }
 
+// Convert a Date to dd/MM format used in event_date
+const toEventDateStr = (date: Date) => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}`;
+};
+
+// Build array of dd/MM strings for a date range
+const buildDateRange = (start: Date, end: Date): string[] => {
+  const dates: string[] = [];
+  const current = new Date(start);
+  while (current <= end) {
+    dates.push(toEventDateStr(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+};
+
 export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidgetProps) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -31,11 +49,26 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
   const [loading, setLoading] = useState(true);
   const initialLoadDone = useRef(false);
 
+  // Calculate date range based on view mode
+  const dateRange = useMemo(() => {
+    if (viewMode === 'today') {
+      return buildDateRange(currentDate, currentDate);
+    } else if (viewMode === 'week') {
+      const start = startOfWeek(currentDate, { weekStartsOn: 0 });
+      const end = endOfWeek(currentDate, { weekStartsOn: 0 });
+      return buildDateRange(start, end);
+    } else {
+      const start = startOfMonth(currentDate);
+      const end = endOfMonth(currentDate);
+      return buildDateRange(start, end);
+    }
+  }, [currentDate, viewMode]);
+
   useEffect(() => {
     if (organizationId) {
       loadEvents();
     }
-  }, [organizationId]);
+  }, [organizationId, dateRange]);
 
   // Realtime
   useEffect(() => {
@@ -50,55 +83,43 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
   }, [organizationId]);
 
   const loadEvents = async () => {
-    if (!organizationId) return;
-    if (initialLoadDone.current) {
-      // Background update - don't show loading
-    } else {
+    if (!organizationId || dateRange.length === 0) return;
+    if (!initialLoadDone.current) {
       setLoading(true);
     }
 
     try {
-      const { data: timelines } = await supabaseClient
-        .from('client_timelines')
-        .select('id, client_name')
-        .eq('organization_id', organizationId)
-        .eq('is_active', true);
-
-      if (!timelines || timelines.length === 0) {
-        setEvents([]);
-        return;
-      }
-
-      const timelineIds = timelines.map(t => t.id);
-      const { data: lines } = await supabaseClient
-        .from('timeline_lines')
-        .select('id, timeline_id')
-        .in('timeline_id', timelineIds);
-
-      if (!lines || lines.length === 0) {
-        setEvents([]);
-        return;
-      }
-
-      const lineIds = lines.map(l => l.id);
+      // Query events filtered by date range directly
+      // event_date is stored as dd/MM text, so we use .in() filter
       const { data: eventsData } = await supabaseClient
         .from('timeline_events')
-        .select('id, event_date, event_time, description, status, icon, line_id')
-        .in('line_id', lineIds);
+        .select(`
+          id, event_date, event_time, description, status, icon,
+          line:timeline_lines!inner(
+            timeline:client_timelines!inner(
+              id, client_name, organization_id, is_active
+            )
+          )
+        `)
+        .in('event_date', dateRange);
 
-      const mapped = (eventsData || []).map(event => {
-        const line = lines.find(l => l.id === event.line_id);
-        const timeline = timelines.find(t => t.id === line?.timeline_id);
-        return {
-          id: event.id,
-          client_name: timeline?.client_name || 'Cliente',
-          event_date: event.event_date,
-          event_time: event.event_time,
-          description: event.description,
-          status: event.status,
-          icon: event.icon,
-        };
-      });
+      // Filter by organization on client side (RLS handles security, but we need org filter)
+      const mapped: Event[] = [];
+      for (const event of (eventsData || [])) {
+        const line = event.line as any;
+        const timeline = line?.timeline;
+        if (timeline?.organization_id === organizationId && timeline?.is_active) {
+          mapped.push({
+            id: event.id,
+            client_name: timeline.client_name || 'Cliente',
+            event_date: event.event_date,
+            event_time: event.event_time,
+            description: event.description,
+            status: event.status,
+            icon: event.icon,
+          });
+        }
+      }
 
       setEvents(mapped);
       initialLoadDone.current = true;
@@ -114,14 +135,10 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
   const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   const getWeekDays = (date: Date) => {
-    const start = new Date(date);
-    const day = start.getDay();
-    start.setDate(start.getDate() - day);
+    const start = startOfWeek(date, { weekStartsOn: 0 });
     const days = [];
     for (let i = 0; i < 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      days.push(d);
+      days.push(addDays(start, i));
     }
     return days;
   };
@@ -129,9 +146,7 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
   const weekDays = getWeekDays(currentDate);
 
   const getEventsForDate = (date: Date) => {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const dateStr = `${day}/${month}`;
+    const dateStr = toEventDateStr(date);
     return events.filter(e => e.event_date === dateStr);
   };
 
@@ -182,10 +197,8 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
 
   return (
     <div className="bg-card border border-border rounded-xl p-4">
-      {/* Title */}
       <h3 className="text-lg font-bold text-center mb-3">Calendário de Eventos</h3>
 
-      {/* View Mode Tabs */}
       <div className="flex justify-center gap-2 mb-4">
         {(['today', 'week', 'month'] as ViewMode[]).map((mode) => (
           <button
@@ -203,7 +216,6 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
         ))}
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between mb-3">
         <button onClick={navigatePrev} className="p-1 hover:bg-muted rounded">
           <ChevronLeft size={18} />
@@ -212,10 +224,7 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
           <span className="font-semibold text-sm">
             {monthNames[currentDate.getMonth()]} de {currentDate.getFullYear()}
           </span>
-          <button
-            onClick={goToToday}
-            className="text-xs px-2 py-0.5 bg-muted rounded hover:bg-muted/80"
-          >
+          <button onClick={goToToday} className="text-xs px-2 py-0.5 bg-muted rounded hover:bg-muted/80">
             Ir para Hoje
           </button>
         </div>
@@ -224,7 +233,6 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
         </button>
       </div>
 
-      {/* Week View */}
       {viewMode === 'week' && (
         <div>
           <div className="grid grid-cols-7 gap-1 mb-2">
@@ -244,9 +252,8 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
             })}
           </div>
 
-          {/* Events for the week */}
           <div className="space-y-1 max-h-[200px] overflow-y-auto">
-            {weekDays.map((day, i) => {
+            {weekDays.map((day) => {
               const dayEvents = getEventsForDate(day);
               if (dayEvents.length === 0) return null;
               return dayEvents.map((event) => (
@@ -273,7 +280,6 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
         </div>
       )}
 
-      {/* Today View */}
       {viewMode === 'today' && (
         <div className="space-y-2 max-h-[300px] overflow-y-auto">
           {getEventsForDate(today).length === 0 ? (
@@ -297,7 +303,6 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
         </div>
       )}
 
-      {/* Month View - Compact */}
       {viewMode === 'month' && (
         <div>
           <div className="grid grid-cols-7 gap-0.5 text-center">
