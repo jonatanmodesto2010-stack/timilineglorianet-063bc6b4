@@ -261,13 +261,19 @@ const Clients = () => {
         <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <div className="flex flex-1 w-full">
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-7xl mx-auto">
-              <div className="h-9 w-48 bg-muted animate-pulse rounded mb-6" />
-              <div className="flex flex-col gap-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
-                ))}
+          <main className="flex-1 p-4 overflow-hidden">
+            <div className="h-full flex flex-col lg:flex-row gap-4">
+              <div className="lg:w-[55%] flex flex-col">
+                <div className="h-9 w-48 bg-muted animate-pulse rounded mb-4" />
+                <div className="flex flex-col gap-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-14 bg-muted animate-pulse rounded-lg" />
+                  ))}
+                </div>
+              </div>
+              <div className="lg:w-[45%] hidden lg:block">
+                <div className="h-8 w-48 bg-muted animate-pulse rounded mb-4" />
+                <div className="h-96 bg-muted animate-pulse rounded-xl" />
               </div>
             </div>
           </main>
