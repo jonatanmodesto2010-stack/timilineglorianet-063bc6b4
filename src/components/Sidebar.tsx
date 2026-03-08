@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Settings, Users, X, ChevronLeft, ChevronRight, LayoutDashboard, BarChart3, Shield } from 'lucide-react';
+import { Settings, Users, X, ChevronLeft, ChevronRight, LayoutDashboard, BarChart3, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_NAME, getFullVersion, BUILD_VERSION } from '@/config/version';
