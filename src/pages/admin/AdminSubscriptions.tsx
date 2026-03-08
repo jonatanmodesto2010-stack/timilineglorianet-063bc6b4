@@ -80,7 +80,7 @@ const AdminSubscriptions = () => {
   const fetchData = async () => {
     const [subsRes, plansRes, orgsRes] = await Promise.all([
       supabase.from('organization_subscriptions').select('*, organizations(name), plans(name)').order('created_at', { ascending: false }),
-      supabase.from('plans').select('id, name, monthly_price').eq('is_active', true).order('sort_order'),
+      supabase.from('plans').select('id, name, monthly_price, max_users, max_clients').eq('is_active', true).order('sort_order'),
       supabase.from('organizations').select('id, name').order('name'),
     ]);
     
