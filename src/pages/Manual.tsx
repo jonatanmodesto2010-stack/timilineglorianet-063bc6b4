@@ -383,10 +383,10 @@ const Manual = () => {
                   </>
                 )}
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* ANÁLISE DE IA */}
-            <AccordionItem value="ia" className="border rounded-lg px-4">
+            {isVisible('ia') && <AccordionItem value="ia" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
