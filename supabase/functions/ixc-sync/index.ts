@@ -352,10 +352,9 @@ Deno.serve(async (req) => {
 
             // Priority: blocked check first, then active/inactive
             if (contract?.blocked || blockedIds.has(clientIdStr)) {
-              // Client is blocked - mark as inactive but keep status 'active' 
-              // so the blocked filter (is_active=false, status not in archived/completed) works
               isActive = false;
               status = 'active';
+              blockedCount++;
             } else if (!isClientActive) {
               status = 'archived';
               isActive = false;
