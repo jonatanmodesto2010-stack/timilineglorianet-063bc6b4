@@ -13,6 +13,7 @@ import { ClientPriorityList } from '@/components/ClientPriorityList';
 import { CollectionActionsWidget } from '@/components/CollectionActionsWidget';
 import { AgreementsOverdueWidget } from '@/components/AgreementsOverdueWidget';
 import { DelinquentsExport } from '@/components/DelinquentsExport';
+import { DashboardDateFilter, type DateRange } from '@/components/DashboardDateFilter';
 
 interface BoletoData {
   timeline_id: string;
