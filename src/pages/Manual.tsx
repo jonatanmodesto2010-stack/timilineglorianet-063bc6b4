@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
@@ -16,14 +17,52 @@ import {
   Users, Calendar, LayoutDashboard, BarChart3, Settings,
   Shield, BookOpen, Clock, Tag, Palette, Link2, FileText,
   UserPlus, Bell, Search, Filter, Plus, CheckCircle2,
-  AlertTriangle, Info, Zap, Lock, Eye
+  AlertTriangle, Info, Zap, Lock, Eye, X
 } from 'lucide-react';
+
+// Searchable section definitions
+interface ManualSection { value: string; title: string; keywords: string; restricted?: string; }
+
+const SECTIONS: ManualSection[] = [
+  { value: 'visao-geral', title: 'Visão Geral do Sistema', keywords: 'visão geral sistema plataforma gestão cobranças recursos perfis acesso viewer member admin owner super' },
+  { value: 'clientes', title: 'Clientes', keywords: 'clientes adicionar novo busca filtros status tags ordenação prioridade detalhes boletos acordos concluir arquivar reativar timeline' },
+  { value: 'timeline', title: 'Timeline de Cobrança', keywords: 'timeline cobrança eventos linhas criar evento ícone data horário descrição posição status criado resolvido sem resposta' },
+  { value: 'calendario', title: 'Calendário', keywords: 'calendário eventos mensal indicadores dia ações régua cobrança agendados' },
+  { value: 'dashboard', title: 'Dashboard', keywords: 'dashboard métricas indicadores clientes ativos valor aberto acordos vencidos ações pendentes filtros data período' },
+  { value: 'relatorios', title: 'Relatórios', keywords: 'relatórios exportação inadimplentes pdf filtros período dados cobrança' },
+  { value: 'acordos', title: 'Acordos e Negociações', keywords: 'acordos negociações dívida parcelas valor desconto pagamento vencidas cancelar ativo concluído' },
+  { value: 'tags', title: 'Tags e Categorização', keywords: 'tags categorização atribuir filtrar cobrança negociação jurídico prioritário vip criar editar excluir cor' },
+  { value: 'ia', title: 'Análise de Risco por IA', keywords: 'inteligência artificial ia risco score análise baixo médio alto crítico recomendações histórico estratégia' },
+  { value: 'configuracoes', title: 'Configurações', keywords: 'configurações perfil usuários adicionar editar remover geral paleta cores tags ícones integrações ixc sincronização régua cobrança regras histórico auditoria', restricted: 'admin' },
+  { value: 'superadmin', title: 'Painel Super Admin', keywords: 'super admin organizações criar plano suspender ativar expiração membros estatísticas', restricted: 'superadmin' },
+  { value: 'dicas', title: 'Dicas e Boas Práticas', keywords: 'dicas boas práticas organização cobrança efetiva sincronização ixc segurança papéis viewers owners' },
+];
 
 const Manual = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { canManageUsers, canManageSettings, isLoading } = useUserRole();
   const { isSuperAdmin } = useSuperAdmin();
   const navigate = useNavigate();
+
+  const filteredSections = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim();
+    return SECTIONS.filter(s => {
+      // Check role restrictions
+      if (s.restricted === 'admin' && !canManageSettings) return false;
+      if (s.restricted === 'superadmin' && !isSuperAdmin) return false;
+      // Check search
+      if (!term) return true;
+      return s.title.toLowerCase().includes(term) || s.keywords.includes(term);
+    });
+  }, [searchTerm, canManageSettings, isSuperAdmin]);
+
+  const openValues = useMemo(() => {
+    if (!searchTerm.trim()) return ['visao-geral'];
+    return filteredSections.map(s => s.value);
+  }, [searchTerm, filteredSections]);
+
+  const isVisible = (value: string) => filteredSections.some(s => s.value === value);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -52,17 +91,43 @@ const Manual = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap items-center gap-2 mb-6">
           <Badge variant="outline" className="gap-1"><Eye className="h-3 w-3" /> Todos</Badge>
           {canManageUsers && <Badge variant="secondary" className="gap-1"><Lock className="h-3 w-3" /> Admin</Badge>}
           {isSuperAdmin && <Badge className="gap-1"><Shield className="h-3 w-3" /> Super Admin</Badge>}
         </div>
 
-        <ScrollArea className="h-[calc(100vh-220px)]">
-          <Accordion type="multiple" defaultValue={["visao-geral"]} className="space-y-2">
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar no manual... (ex: boleto, acordo, IXC, tags)"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 pr-9"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {searchTerm && filteredSections.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            <p className="font-medium">Nenhum resultado encontrado</p>
+            <p className="text-sm">Tente buscar por outro termo</p>
+          </div>
+        )}
+
+        <ScrollArea className="h-[calc(100vh-320px)]">
+          <Accordion type="multiple" value={openValues} className="space-y-2">
 
             {/* VISÃO GERAL */}
-            <AccordionItem value="visao-geral" className="border rounded-lg px-4">
+            {isVisible('visao-geral') && <AccordionItem value="visao-geral" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-primary" />
@@ -92,10 +157,10 @@ const Manual = () => {
                   <li><Badge className="text-xs">Super Admin</Badge> — Gestão de todas as organizações do sistema</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* CLIENTES */}
-            <AccordionItem value="clientes" className="border rounded-lg px-4">
+            {isVisible('clientes') && <AccordionItem value="clientes" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
@@ -141,10 +206,10 @@ const Manual = () => {
                   <li><strong>Reativar:</strong> Volta um cliente concluído/arquivado para ativo</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* TIMELINE */}
-            <AccordionItem value="timeline" className="border rounded-lg px-4">
+            {isVisible('timeline') && <AccordionItem value="timeline" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-primary" />
@@ -186,10 +251,10 @@ const Manual = () => {
                   <li>Atualize o status dos eventos conforme o retorno do cliente</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* CALENDÁRIO */}
-            <AccordionItem value="calendario" className="border rounded-lg px-4">
+            {isVisible('calendario') && <AccordionItem value="calendario" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
@@ -206,10 +271,10 @@ const Manual = () => {
                   <li><strong>Ações da régua de cobrança:</strong> Ações automáticas aparecem no calendário</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* DASHBOARD */}
-            <AccordionItem value="dashboard" className="border rounded-lg px-4">
+            {isVisible('dashboard') && <AccordionItem value="dashboard" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <LayoutDashboard className="h-5 w-5 text-primary" />
@@ -231,10 +296,10 @@ const Manual = () => {
                 <h4>Filtros de Data:</h4>
                 <p>Use os filtros de período para analisar dados de intervalos específicos (hoje, esta semana, este mês, período personalizado).</p>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* RELATÓRIOS */}
-            <AccordionItem value="relatorios" className="border rounded-lg px-4">
+            {isVisible('relatorios') && <AccordionItem value="relatorios" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
@@ -250,10 +315,10 @@ const Manual = () => {
                   <li><strong>Dados de cobrança:</strong> Acompanhe a evolução das ações realizadas</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* ACORDOS */}
-            <AccordionItem value="acordos" className="border rounded-lg px-4">
+            {isVisible('acordos') && <AccordionItem value="acordos" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary" />
@@ -288,10 +353,10 @@ const Manual = () => {
                   <li><Badge variant="secondary" className="text-xs bg-red-100 text-red-800">Cancelado</Badge> — Acordo foi cancelado</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* TAGS */}
-            <AccordionItem value="tags" className="border rounded-lg px-4">
+            {isVisible('tags') && <AccordionItem value="tags" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Tag className="h-5 w-5 text-primary" />
@@ -318,10 +383,10 @@ const Manual = () => {
                   </>
                 )}
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* ANÁLISE DE IA */}
-            <AccordionItem value="ia" className="border rounded-lg px-4">
+            {isVisible('ia') && <AccordionItem value="ia" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
@@ -350,10 +415,10 @@ const Manual = () => {
                 <h4>Histórico de Análises:</h4>
                 <p>Todas as análises ficam salvas no histórico do cliente, permitindo acompanhar a evolução do risco ao longo do tempo.</p>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* CONFIGURAÇÕES - ADMIN */}
-            {canManageSettings && (
+            {isVisible('configuracoes') && (
               <AccordionItem value="configuracoes" className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-2">
@@ -411,7 +476,7 @@ const Manual = () => {
             )}
 
             {/* SUPER ADMIN */}
-            {isSuperAdmin && (
+            {isVisible('superadmin') && (
               <AccordionItem value="superadmin" className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-2">
@@ -451,7 +516,7 @@ const Manual = () => {
             )}
 
             {/* DICAS E BOAS PRÁTICAS */}
-            <AccordionItem value="dicas" className="border rounded-lg px-4">
+            {isVisible('dicas') && <AccordionItem value="dicas" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-primary" />
@@ -488,7 +553,7 @@ const Manual = () => {
                   <li>Apenas Owners podem excluir integrações</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
           </Accordion>
         </ScrollArea>
