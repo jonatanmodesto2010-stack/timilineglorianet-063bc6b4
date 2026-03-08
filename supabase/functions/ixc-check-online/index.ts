@@ -114,6 +114,17 @@ Deno.serve(async (req) => {
     while (true) {
       const { registros, total } = await ixcRequest(api_url, encodedToken, 'radusuarios', page, perPage);
       
+      console.log(`radusuarios page ${page}: ${registros.length} records, total: ${total}`);
+      
+      // Log first few records to understand structure
+      if (page === 1 && registros.length > 0) {
+        console.log('Sample radusuarios record keys:', Object.keys(registros[0]));
+        console.log('Sample record:', JSON.stringify(registros[0]).substring(0, 500));
+        // Log all unique values of online field
+        const onlineValues = new Set(registros.map((r: any) => r.online));
+        console.log('Unique online values:', [...onlineValues]);
+      }
+      
       for (const r of registros) {
         const clientId = String(r.id_cliente || '');
         // radusuarios: online field = 'S' means online
@@ -122,9 +133,11 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (onlineClientIds.length >= total || registros.length < perPage) break;
+      if (registros.length === 0 || onlineClientIds.length >= total || registros.length < perPage) break;
       page++;
     }
+    
+    console.log(`Total online clients found: ${onlineClientIds.length}`);
 
     // If client_ids provided, filter to only those
     let result = onlineClientIds;
