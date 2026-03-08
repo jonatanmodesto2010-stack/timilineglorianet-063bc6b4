@@ -17,6 +17,7 @@ const Settings = React.lazy(() => import("./pages/Settings"));
 const Profile = React.lazy(() => import("./pages/Profile"));
 const VisualTimeline = React.lazy(() => import("./pages/VisualTimeline"));
 const Reports = React.lazy(() => import("./pages/Reports"));
+const Manual = React.lazy(() => import("./pages/Manual"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminOrganizations = React.lazy(() => import("./pages/admin/AdminOrganizations"));
@@ -52,6 +53,7 @@ const AppContent = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/visual-timeline" element={<VisualTimeline />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/manual" element={<Manual />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/organizations" element={<AdminOrganizations />} />

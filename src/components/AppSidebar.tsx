@@ -1,4 +1,4 @@
-import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield } from 'lucide-react';
+import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_NAME, getFullVersion, BUILD_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
@@ -20,6 +20,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: BarChart3, label: 'Relatórios', path: '/reports' },
   { icon: Settings, label: 'Configurações', path: '/settings' },
+  { icon: BookOpen, label: 'Manual', path: '/manual' },
 ];
 
 export function AppSidebar() {
