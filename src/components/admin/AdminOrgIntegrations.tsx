@@ -315,6 +315,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
 
   const startSync = async (syncAction: string) => {
     if (syncProgress?.status === 'running') return;
+    setActiveSyncAction(syncAction);
     try {
       supabase.functions.invoke('ixc-sync', {
         body: { action: syncAction, organization_id: organizationId },
@@ -334,6 +335,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
         }
       }, 1500);
     } catch (err: any) {
+      setActiveSyncAction(null);
       toast({ title: 'Erro ao iniciar sincronização', description: err.message, variant: 'destructive' });
     }
   };
