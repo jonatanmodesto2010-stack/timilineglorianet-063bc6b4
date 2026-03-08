@@ -312,6 +312,8 @@ export type Database = {
           due_date: string | null
           id: string
           is_active: boolean
+          ixc_filial_id: string | null
+          ixc_filial_name: string | null
           organization_id: string | null
           start_date: string
           status: string
@@ -328,6 +330,8 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_active?: boolean
+          ixc_filial_id?: string | null
+          ixc_filial_name?: string | null
           organization_id?: string | null
           start_date: string
           status?: string
@@ -344,6 +348,8 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_active?: boolean
+          ixc_filial_id?: string | null
+          ixc_filial_name?: string | null
           organization_id?: string | null
           start_date?: string
           status?: string
