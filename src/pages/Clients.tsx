@@ -399,8 +399,8 @@ const Clients = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas filiais</SelectItem>
-                        {filiais.map(([id, name]) => (
-                          <SelectItem key={id} value={id}>{name}</SelectItem>
+                        {filiais.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
