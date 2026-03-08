@@ -433,12 +433,13 @@ const Clients = () => {
                     })}
                   </div>
                 )}
+                </div>
               </motion.div>
             </div>
 
-            {/* Right Column - Widgets */}
-            <div className="hidden lg:block w-[380px] flex-shrink-0 space-y-4">
-              <CalendarWidget 
+            {/* Right Column - Full Calendar */}
+            <div className="lg:w-[45%] flex-shrink-0 overflow-hidden lg:flex hidden flex-col">
+              <CalendarPanel
                 organizationId={organizationId}
                 onClientClick={(name) => setSearchTerm(name)}
               />
