@@ -34,6 +34,8 @@ interface Plan {
   id: string;
   name: string;
   monthly_price: number;
+  max_users: number;
+  max_clients: number;
 }
 
 interface Org {
