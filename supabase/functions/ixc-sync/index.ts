@@ -62,6 +62,19 @@ async function fetchAllIxcRecords(apiUrl: string, token: string, endpoint: strin
   return all;
 }
 
+async function fetchFiliais(apiUrl: string, token: string): Promise<Map<string, string>> {
+  const filialMap = new Map<string, string>();
+  try {
+    const filiais = await fetchAllIxcRecords(apiUrl, token, 'filial');
+    for (const f of filiais) {
+      filialMap.set(String(f.id), f.razao || f.fantasia || `Filial ${f.id}`);
+    }
+  } catch (e) {
+    console.log('Could not fetch filiais:', e.message);
+  }
+  return filialMap;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -137,6 +150,9 @@ Deno.serve(async (req) => {
           // Fetch clients
           const clients = await fetchAllIxcRecords(api_url, token, 'cliente');
 
+          // Fetch filiais
+          const filialMap = await fetchFiliais(api_url, token);
+
           // Fetch contracts
           const contractsUrl = api_url_contracts || api_url;
           const contractsToken = api_url_contracts ? token : token;
@@ -168,7 +184,7 @@ Deno.serve(async (req) => {
           // Get existing timelines for this org
           const { data: existingTimelines } = await supabase
             .from('client_timelines')
-            .select('id, client_id, client_name, is_active, status')
+            .select('id, client_id, client_name, is_active, status, ixc_filial_id')
             .eq('organization_id', organization_id);
 
           const existingMap = new Map<string, any>();
@@ -196,12 +212,18 @@ Deno.serve(async (req) => {
           const updateNames: string[] = [];
           const updateActive: boolean[] = [];
           const updateStatuses: string[] = [];
+          const updateFilialIds: string[] = [];
+          const updateFilialNames: string[] = [];
 
           for (const client of clients) {
             const clientIdStr = String(client.id);
             const clientName = client.razao || client.fantasia || `Cliente ${client.id}`;
             const contract = contractMap.get(clientIdStr);
             const isClientActive = client.ativo === 'S';
+
+            // Get filial info
+            const filialId = client.id_filial ? String(client.id_filial) : null;
+            const filialName = filialId ? (filialMap.get(filialId) || `Filial ${filialId}`) : null;
 
             let isActive = true;
             let status = 'active';
@@ -217,11 +239,13 @@ Deno.serve(async (req) => {
             const existing = existingMap.get(clientIdStr);
             if (existing) {
               // Only update if changed
-              if (existing.client_name !== clientName || existing.is_active !== isActive || existing.status !== status) {
+              if (existing.client_name !== clientName || existing.is_active !== isActive || existing.status !== status || existing.ixc_filial_id !== filialId) {
                 updateIds.push(existing.id);
                 updateNames.push(clientName);
                 updateActive.push(isActive);
                 updateStatuses.push(status);
+                updateFilialIds.push(filialId || '');
+                updateFilialNames.push(filialName || '');
               }
             } else {
               toInsert.push({
@@ -232,6 +256,8 @@ Deno.serve(async (req) => {
                 organization_id,
                 user_id: defaultUserId,
                 start_date: new Date().toISOString().split('T')[0],
+                ixc_filial_id: filialId,
+                ixc_filial_name: filialName,
               });
             }
           }
@@ -253,12 +279,15 @@ Deno.serve(async (req) => {
                 p_names: updateNames.slice(i, i + 500),
                 p_active: updateActive.slice(i, i + 500),
                 p_statuses: updateStatuses.slice(i, i + 500),
+                p_filial_ids: updateFilialIds.slice(i, i + 500),
+                p_filial_names: updateFilialNames.slice(i, i + 500),
               });
               if (error) orgResult.errors.push(`Update error: ${error.message}`);
             }
           }
 
           orgResult.clients = clients.length;
+          orgResult.filiais = filialMap.size;
         }
 
         // === SYNC BOLETOS ===

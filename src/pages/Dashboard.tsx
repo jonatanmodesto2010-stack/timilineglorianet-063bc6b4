@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, CheckCircle, AlertTriangle, Clock, DollarSign, TrendingUp, TrendingDown, BarChart3, PieChart } from 'lucide-react';
+import { Users, CheckCircle, AlertTriangle, Clock, DollarSign, TrendingUp, TrendingDown, BarChart3, PieChart, Building2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { CollectionActionsWidget } from '@/components/CollectionActionsWidget';
 import { AgreementsOverdueWidget } from '@/components/AgreementsOverdueWidget';
 import { DelinquentsExport } from '@/components/DelinquentsExport';
 import { DashboardDateFilter, type DateRange } from '@/components/DashboardDateFilter';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface BoletoData {
   timeline_id: string;
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const [boletos, setBoletos] = useState<BoletoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null, label: 'Todo período' });
+  const [filialFilter, setFilialFilter] = useState<string>('all');
   const { organizationId } = useUserRole();
   const navigate = useNavigate();
 
@@ -66,16 +68,42 @@ const Dashboard = () => {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
+  // Extract unique filiais
+  const filiais = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of allTimelines) {
+      if (t.ixc_filial_id && t.ixc_filial_name) {
+        map.set(t.ixc_filial_id, t.ixc_filial_name);
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [allTimelines]);
+
+  // Filter timelines by filial
+  const filteredTimelines = useMemo(() => {
+    if (filialFilter === 'all') return allTimelines;
+    return allTimelines.filter(t => t.ixc_filial_id === filialFilter);
+  }, [allTimelines, filialFilter]);
+
+  // Filter boletos by filial-filtered timelines
+  const filialTimelineIds = useMemo(() => {
+    return new Set(filteredTimelines.map(t => t.id));
+  }, [filteredTimelines]);
+
   const filteredBoletos = useMemo(() => {
-    if (!dateRange.from || !dateRange.to) return boletos;
-    return boletos.filter(b => {
+    let filtered = boletos;
+    if (filialFilter !== 'all') {
+      filtered = filtered.filter(b => filialTimelineIds.has(b.timeline_id));
+    }
+    if (!dateRange.from || !dateRange.to) return filtered;
+    return filtered.filter(b => {
       const d = new Date(b.due_date + 'T00:00:00');
       return d >= dateRange.from! && d <= dateRange.to!;
     });
-  }, [boletos, dateRange]);
+  }, [boletos, dateRange, filialFilter, filialTimelineIds]);
 
   const stats = useMemo(() => {
-    const grouped = groupTimelinesByClient(allTimelines);
+    const grouped = groupTimelinesByClient(filteredTimelines);
     const total = grouped.length;
     const active = grouped.filter(c => c.is_active && c.status === 'active').length;
     const blocked = grouped.filter(c => !c.is_active && c.status !== 'archived' && c.status !== 'completed').length;
@@ -138,7 +166,7 @@ const Dashboard = () => {
       delinquencyRate, avgOverdueDays, blockRate,
       aging, agingCount,
     };
-  }, [allTimelines, filteredBoletos]);
+  }, [filteredTimelines, filteredBoletos]);
 
   const agingChartData = [
     { name: '1-30d', value: stats.aging['1-30'], count: stats.agingCount['1-30'], fill: 'hsl(48 96% 53%)' },
@@ -184,8 +212,22 @@ const Dashboard = () => {
               </motion.div>
               {!loading && (
                 <div className="flex items-center gap-2">
+                  {filiais.length > 0 && (
+                    <Select value={filialFilter} onValueChange={setFilialFilter}>
+                      <SelectTrigger className="w-48">
+                        <Building2 size={14} className="mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Todas filiais" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas filiais</SelectItem>
+                        {filiais.map(([id, name]) => (
+                          <SelectItem key={id} value={id}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <DashboardDateFilter value={dateRange} onChange={setDateRange} />
-                  <DelinquentsExport timelines={allTimelines} boletos={boletos} />
+                  <DelinquentsExport timelines={filteredTimelines} boletos={filteredBoletos} />
                 </div>
               )}
             </div>
@@ -361,7 +403,7 @@ const Dashboard = () => {
 
                 <CollectionActionsWidget />
                 <AgreementsOverdueWidget />
-                <ClientPriorityList timelines={allTimelines} boletos={boletos} />
+                <ClientPriorityList timelines={filteredTimelines} boletos={filteredBoletos} />
               </>
             )}
           </div>
