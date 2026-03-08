@@ -476,19 +476,19 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
 
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync_clients')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Users size={16} className="mr-2" />}
+                {activeSyncAction === 'sync_clients' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Users size={16} className="mr-2" />}
                 Sincronizar Clientes
               </Button>
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync_boletos')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <FileText size={16} className="mr-2" />}
+                {activeSyncAction === 'sync_boletos' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <FileText size={16} className="mr-2" />}
                 Sincronizar Boletos
               </Button>
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
+                {activeSyncAction === 'sync' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
                 Sincronizar Tudo
               </Button>
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('check_blocked')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <ShieldAlert size={16} className="mr-2" />}
+                {activeSyncAction === 'check_blocked' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <ShieldAlert size={16} className="mr-2" />}
                 Diagnóstico Bloqueados
               </Button>
               {isSyncing && (
