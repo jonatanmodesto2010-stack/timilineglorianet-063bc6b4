@@ -29,6 +29,7 @@ const Dashboard = () => {
   const [boletos, setBoletos] = useState<BoletoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null, label: 'Todo período' });
+  const [filialFilter, setFilialFilter] = useState<string>('all');
   const { organizationId } = useUserRole();
   const navigate = useNavigate();
 
