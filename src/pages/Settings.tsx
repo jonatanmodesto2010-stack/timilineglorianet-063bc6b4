@@ -69,6 +69,8 @@ const Settings = () => {
                    
                    <TabsTrigger value="collection">Régua de Cobrança</TabsTrigger>
                    <TabsTrigger value="integrations">Integrações</TabsTrigger>
+                </>
+              )}
             <TabsTrigger value="history">Histórico</TabsTrigger>
           </TabsList>
 
