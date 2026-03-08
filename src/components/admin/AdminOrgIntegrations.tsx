@@ -212,7 +212,8 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
             .from('integration_sync_log')
             .update({ status: 'error', error_message: 'Travamento detectado (120s sem progresso)', completed_at: new Date().toISOString() })
             .eq('id', syncId);
-          setSyncProgress(null);
+           setSyncProgress(null);
+          setActiveSyncAction(null);
           stopPolling();
           toast({ title: 'Sincronização travada', description: 'Interrompida após 120s sem progresso.', variant: 'destructive' });
           return;
