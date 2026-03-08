@@ -286,174 +286,192 @@ const Clients = () => {
   }
 
   const clientsContent = (
+    <div className="flex flex-col min-w-0 overflow-hidden h-full">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full overflow-hidden">
+        <div className="flex items-center gap-4 mb-4">
+          <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
+          {filiais.length > 0 && (
+            <Select value={filialFilter} onValueChange={setFilialFilter}>
+              <SelectTrigger className="w-[220px] h-9">
+                <Building2 className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Todas filiais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas filiais</SelectItem>
+                {filiais.map(([id, name]) => (
+                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        <ClientSearchFilters 
+          onFilterChange={(filters) => {
+            setSearchTerm(filters.searchTerm || '');
+            setStatusFilter(filters.statusFilter || 'all');
+          }}
+          organizationId={organizationId}
+          pageName="clients"
+        />
+
+        {/* Pagination Controls */}
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-1">
+            <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Primeira página">
+              <ChevronsLeft size={16} />
+            </button>
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Página anterior">
+              <ChevronLeft size={16} />
+            </button>
+            <button onClick={loadClients} className="p-1.5 rounded hover:bg-muted transition-colors" title="Atualizar">
+              <RefreshCw size={16} />
+            </button>
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Próxima página">
+              <ChevronRight size={16} />
+            </button>
+            <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Última página">
+              <ChevronsRight size={16} />
+            </button>
+            <span className="text-sm text-muted-foreground ml-2">
+              {startIndex + 1} - {endIndex} / {filteredClients.length}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <motion.button
+              onClick={() => navigate('/history')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap text-sm"
+            >
+              <History size={16} />
+              Histórico
+            </motion.button>
+
+            <motion.button
+              onClick={() => setNewClientModalOpen(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap text-sm"
+            >
+              <Plus size={16} />
+              Novo Cliente
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Client List - Scrollable */}
+        <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+        {paginatedClients.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            <p>Nenhum cliente encontrado</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 w-full pr-1">
+            {paginatedClients.map((client, index) => {
+              const info = getClientBadgeInfo(client);
+              return (
+                <motion.div
+                  key={client.primaryTimeline.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: Math.min(index * 0.03, 0.3) }}
+                  className={`w-full rounded-lg p-3 flex items-center gap-3 transition-colors hover:opacity-90 cursor-pointer ${getCardStyle(info)}`}
+                  onClick={() => handleOpenModal(client)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-card-foreground font-bold text-sm uppercase tracking-wide truncate">
+                      {client.client_name}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {info.overdueDays > 0 && (
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${info.isBlocked ? 'bg-red-500 text-white' : info.isOverdue ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'}`}>
+                        {info.overdueDays}d
+                      </div>
+                    )}
+
+                    {info.isBlocked && (
+                      <div className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full flex items-center gap-1 font-semibold border border-red-500/30">
+                        <Lock size={11} />
+                        BLOQ
+                      </div>
+                    )}
+
+                    {info.isInactive && (
+                      <div className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full font-semibold">
+                        Inativo
+                      </div>
+                    )}
+
+                    {info.isCompleted && (
+                      <div className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full font-semibold">
+                        Finalizado
+                      </div>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenTimelineDialog(client);
+                      }}
+                      className="border-green-500/30 hover:bg-green-500/10 text-green-400 hover:text-green-300 h-8 w-8"
+                      title="Ver Timeline"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+        </div>
+      </motion.div>
+    </div>
+  );
+
+  const calendarContent = (
+    <div className="h-full overflow-hidden flex flex-col">
+      <CalendarPanel
+        organizationId={organizationId}
+        onClientClick={(name) => setSearchTerm(name)}
+      />
+    </div>
+  );
+
+  return (
     <div className="min-h-screen flex flex-col w-full bg-background">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       
-      <div className="flex flex-1 w-full">
+      <div className="flex flex-1 w-full overflow-hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         
         <main className="flex-1 p-4 overflow-hidden">
-          <div className="h-full flex flex-col lg:flex-row gap-4">
-            {/* Left Column - Client List */}
-            <div className="lg:w-[55%] flex flex-col min-w-0 overflow-hidden">
-              <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <div className="flex items-center gap-4 mb-6">
-                  <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
-                  {filiais.length > 0 && (
-                    <Select value={filialFilter} onValueChange={setFilialFilter}>
-                      <SelectTrigger className="w-[220px] h-9">
-                        <Building2 className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <SelectValue placeholder="Todas filiais" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas filiais</SelectItem>
-                        {filiais.map(([id, name]) => (
-                          <SelectItem key={id} value={id}>{name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-
-                <ClientSearchFilters 
-                  onFilterChange={(filters) => {
-                    setSearchTerm(filters.searchTerm || '');
-                    setStatusFilter(filters.statusFilter || 'all');
-                  }}
-                  organizationId={organizationId}
-                  pageName="clients"
-                />
-
-                {/* Pagination Controls */}
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Primeira página">
-                      <ChevronsLeft size={16} />
-                    </button>
-                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Página anterior">
-                      <ChevronLeft size={16} />
-                    </button>
-                    <button onClick={loadClients} className="p-1.5 rounded hover:bg-muted transition-colors" title="Atualizar">
-                      <RefreshCw size={16} />
-                    </button>
-                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Próxima página">
-                      <ChevronRight size={16} />
-                    </button>
-                    <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Última página">
-                      <ChevronsRight size={16} />
-                    </button>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      {startIndex + 1} - {endIndex} / {filteredClients.length}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <motion.button
-                      onClick={() => navigate('/history')}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <History size={18} />
-                      Histórico
-                    </motion.button>
-
-                    <motion.button
-                      onClick={() => setNewClientModalOpen(true)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <Plus size={18} />
-                      Novo Cliente
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Client List - Scrollable */}
-                <div className="flex-1 overflow-y-auto min-h-0">
-                {paginatedClients.length === 0 ? (
-                  <div className="text-center py-20 text-muted-foreground">
-                    <p>Nenhum cliente encontrado</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 w-full pr-1">
-                    {paginatedClients.map((client, index) => {
-                      const info = getClientBadgeInfo(client);
-                      return (
-                        <motion.div
-                          key={client.primaryTimeline.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: Math.min(index * 0.03, 0.3) }}
-                          className={`w-full rounded-lg p-4 flex items-center gap-4 transition-colors hover:opacity-90 cursor-pointer ${getCardStyle(info)}`}
-                          onClick={() => handleOpenModal(client)}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-card-foreground font-bold text-base uppercase tracking-wide truncate">
-                              {client.client_name}
-                            </h3>
-                          </div>
-
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {/* Overdue Days Badge */}
-                            {info.overdueDays > 0 && (
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${info.isBlocked ? 'bg-red-500 text-white' : info.isOverdue ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'}`}>
-                                {info.overdueDays}d
-                              </div>
-                            )}
-
-                            {/* Status Badges */}
-                            {info.isBlocked && (
-                              <div className="px-3 py-1 bg-red-500/20 text-red-400 text-xs rounded-full flex items-center gap-1 font-semibold border border-red-500/30">
-                                <Lock size={12} />
-                                BLOQUEADO
-                              </div>
-                            )}
-
-                            {info.isInactive && (
-                              <div className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full font-semibold">
-                                Inativo
-                              </div>
-                            )}
-
-                            {info.isCompleted && (
-                              <div className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full font-semibold">
-                                Finalizado
-                              </div>
-                            )}
-
-                            {/* Timeline Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenTimelineDialog(client);
-                              }}
-                              className="border-green-500/30 hover:bg-green-500/10 text-green-400 hover:text-green-300"
-                              title="Ver Timeline"
-                            >
-                              <TrendingUp className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
-                </div>
-              </motion.div>
+          {isMobile ? (
+            <div className="h-full flex flex-col gap-4 overflow-y-auto">
+              {clientsContent}
+              {calendarContent}
             </div>
-
-            {/* Right Column - Full Calendar */}
-            <div className="lg:w-[45%] flex-shrink-0 overflow-hidden lg:flex hidden flex-col">
-              <CalendarPanel
-                organizationId={organizationId}
-                onClientClick={(name) => setSearchTerm(name)}
-              />
-            </div>
-          </div>
+          ) : (
+            <ResizablePanelGroup
+              direction="horizontal"
+              className="h-full rounded-lg"
+              autoSaveId="clients-calendar-layout"
+            >
+              <ResizablePanel defaultSize={35} minSize={25}>
+                {clientsContent}
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={65} minSize={40}>
+                {calendarContent}
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          )}
         </main>
       </div>
 
