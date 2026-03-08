@@ -47,6 +47,56 @@ async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string
   };
 }
 
+// Helper: check if sync was cancelled
+async function checkCancelled(supabase: any, syncId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('integration_sync_log')
+    .select('status')
+    .eq('id', syncId)
+    .single();
+  return data?.status === 'cancelled';
+}
+
+// Helper: update sync log progress
+async function updateSyncLog(supabase: any, syncId: string, updates: Record<string, any>) {
+  await supabase
+    .from('integration_sync_log')
+    .update({ ...updates })
+    .eq('id', syncId);
+}
+
+async function fetchAllIxcRecordsWithProgress(
+  apiUrl: string, token: string, endpoint: string,
+  supabase: any, syncId: string,
+  extraBody: Record<string, any> = {},
+  progressOffset = 0
+) {
+  const all: any[] = [];
+  let page = 1;
+  const perPage = 500;
+
+  while (true) {
+    // Check cancellation every page
+    if (await checkCancelled(supabase, syncId)) {
+      throw new Error('CANCELLED');
+    }
+
+    const { registros, total } = await ixcRequest(apiUrl, token, endpoint, page, perPage, extraBody);
+    all.push(...registros);
+
+    // Update progress
+    await updateSyncLog(supabase, syncId, {
+      records_processed: progressOffset + all.length,
+      total_records: progressOffset + total,
+    });
+
+    if (all.length >= total || registros.length < perPage) break;
+    page++;
+  }
+
+  return all;
+}
+
 async function fetchAllIxcRecords(apiUrl: string, token: string, endpoint: string, extraBody: Record<string, any> = {}) {
   const all: any[] = [];
   let page = 1;
@@ -144,11 +194,36 @@ Deno.serve(async (req) => {
       const token = encodeIxcToken(api_token);
       const orgResult: any = { organization_id, clients: 0, boletos: 0, errors: [] };
 
+      // Create sync log entry
+      const syncType = action === 'sync_boletos' ? 'boletos' : 'full';
+      const { data: syncLog } = await supabase
+        .from('integration_sync_log')
+        .insert({
+          organization_id,
+          sync_type: syncType,
+          status: 'running',
+          started_at: new Date().toISOString(),
+          records_processed: 0,
+          total_records: 0,
+        })
+        .select('id')
+        .single();
+
+      const syncId = syncLog?.id;
+
       try {
         // === SYNC CLIENTS ===
         if (action === 'sync' || action === 'cron' || action === 'sync_all') {
-          // Fetch clients
-          const clients = await fetchAllIxcRecords(api_url, token, 'cliente');
+          // Fetch clients with progress tracking
+          const clients = await fetchAllIxcRecordsWithProgress(api_url, token, 'cliente', supabase, syncId);
+
+          // Check cancellation
+          if (await checkCancelled(supabase, syncId)) {
+            orgResult.errors.push('Sincronização cancelada pelo usuário');
+            await updateSyncLog(supabase, syncId, { status: 'cancelled', completed_at: new Date().toISOString() });
+            results.push(orgResult);
+            continue;
+          }
 
           // Fetch filiais
           const filialMap = await fetchFiliais(api_url, token);
@@ -157,6 +232,13 @@ Deno.serve(async (req) => {
           const contractsUrl = api_url_contracts || api_url;
           const contractsToken = api_url_contracts ? token : token;
           const contracts = await fetchAllIxcRecords(contractsUrl, contractsToken, 'cliente_contrato');
+
+          // Check cancellation
+          if (await checkCancelled(supabase, syncId)) {
+            await updateSyncLog(supabase, syncId, { status: 'cancelled', completed_at: new Date().toISOString() });
+            results.push(orgResult);
+            continue;
+          }
 
           // Fetch blocked clients
           let blockedIds = new Set<string>();
@@ -167,7 +249,7 @@ Deno.serve(async (req) => {
             orgResult.errors.push(`Erro ao buscar bloqueados: ${e.message}`);
           }
 
-          // Build contract map: client_id -> { active, blocked }
+          // Build contract map
           const contractMap = new Map<string, { active: boolean; blocked: boolean }>();
           for (const c of contracts) {
             const cid = String(c.id_cliente);
@@ -178,6 +260,32 @@ Deno.serve(async (req) => {
                 active: isContractActive,
                 blocked: blockedIds.has(cid),
               });
+            }
+          }
+
+          // Discover clients from contracts not in main list
+          const mainClientIds = new Set(clients.map((c: any) => String(c.id)));
+          const contractOnlyIds = new Set<string>();
+          for (const c of contracts) {
+            const cid = String(c.id_cliente);
+            if (!mainClientIds.has(cid)) {
+              contractOnlyIds.add(cid);
+            }
+          }
+
+          // Fetch contract-only clients individually
+          for (const cid of contractOnlyIds) {
+            try {
+              const { registros } = await ixcRequest(api_url, token, 'cliente', 1, 1, {
+                qtype: 'id',
+                query: cid,
+                oper: '=',
+              });
+              if (registros.length > 0) {
+                clients.push(registros[0]);
+              }
+            } catch (e) {
+              console.log(`Could not fetch contract-only client ${cid}:`, e.message);
             }
           }
 
@@ -192,7 +300,7 @@ Deno.serve(async (req) => {
             if (t.client_id) existingMap.set(t.client_id, t);
           }
 
-          // Get a user_id for this org (first owner/admin)
+          // Get a user_id for this org
           const { data: orgUsers } = await supabase
             .from('user_roles')
             .select('user_id')
@@ -202,6 +310,7 @@ Deno.serve(async (req) => {
           const defaultUserId = orgUsers?.[0]?.user_id;
           if (!defaultUserId) {
             orgResult.errors.push('Nenhum owner/admin encontrado na organização');
+            await updateSyncLog(supabase, syncId, { status: 'error', error_message: 'No admin found', completed_at: new Date().toISOString() });
             results.push(orgResult);
             continue;
           }
@@ -221,7 +330,6 @@ Deno.serve(async (req) => {
             const contract = contractMap.get(clientIdStr);
             const isClientActive = client.ativo === 'S';
 
-            // Get filial info
             const filialId = client.id_filial ? String(client.id_filial) : null;
             const filialName = filialId ? (filialMap.get(filialId) || `Filial ${filialId}`) : null;
 
@@ -238,7 +346,6 @@ Deno.serve(async (req) => {
 
             const existing = existingMap.get(clientIdStr);
             if (existing) {
-              // Only update if changed
               if (existing.client_name !== clientName || existing.is_active !== isActive || existing.status !== status || existing.ixc_filial_id !== filialId) {
                 updateIds.push(existing.id);
                 updateNames.push(clientName);
@@ -262,18 +369,20 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Batch insert new clients
+          // Batch insert
           if (toInsert.length > 0) {
             for (let i = 0; i < toInsert.length; i += 200) {
+              if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
               const chunk = toInsert.slice(i, i + 200);
               const { error } = await supabase.from('client_timelines').insert(chunk);
               if (error) orgResult.errors.push(`Insert error: ${error.message}`);
             }
           }
 
-          // Batch update existing
+          // Batch update
           if (updateIds.length > 0) {
             for (let i = 0; i < updateIds.length; i += 500) {
+              if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
               const { error } = await supabase.rpc('batch_upsert_clients', {
                 p_ids: updateIds.slice(i, i + 500),
                 p_names: updateNames.slice(i, i + 500),
@@ -287,15 +396,19 @@ Deno.serve(async (req) => {
           }
 
           orgResult.clients = clients.length;
+          orgResult.clients_inserted = toInsert.length;
+          orgResult.clients_updated = updateIds.length;
+          orgResult.clients_from_contracts = contractOnlyIds.size;
           orgResult.filiais = filialMap.size;
         }
 
         // === SYNC BOLETOS ===
         if (action === 'sync_boletos' || action === 'sync' || action === 'cron' || action === 'sync_all') {
-          // Fetch all boletos (fn_areceber) from IXC
-          const boletos = await fetchAllIxcRecords(api_url, token, 'fn_areceber');
+          if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
 
-          // Get timelines for this org to map client_id -> timeline_id
+          const currentOffset = orgResult.clients || 0;
+          const boletos = await fetchAllIxcRecordsWithProgress(api_url, token, 'fn_areceber', supabase, syncId, {}, currentOffset);
+
           const { data: timelines } = await supabase
             .from('client_timelines')
             .select('id, client_id')
@@ -306,7 +419,6 @@ Deno.serve(async (req) => {
             if (t.client_id) clientToTimeline.set(t.client_id, t.id);
           }
 
-          // Get existing boletos for this org
           const timelineIds = (timelines || []).map(t => t.id);
           let existingBoletos = new Map<string, any>();
           if (timelineIds.length > 0) {
@@ -323,22 +435,19 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Process boletos
           const boletosToInsert: any[] = [];
           const boletosToUpdate: { id: string; status: string; boleto_value: number; due_date: string }[] = [];
-
           let processedCount = 0;
 
           for (const boleto of boletos) {
             const clientId = String(boleto.id_cliente);
             const timelineId = clientToTimeline.get(clientId);
-            if (!timelineId) continue; // Skip boletos for unknown clients
+            if (!timelineId) continue;
 
             const ixcBoletoId = String(boleto.id);
             const valor = parseFloat(boleto.valor || '0');
             const dataVencimento = boleto.data_vencimento || '';
-            
-            // Map IXC status to our status
+
             let status = 'pendente';
             if (boleto.status === 'R' || boleto.liquidado === 'S') {
               status = 'pago';
@@ -348,14 +457,8 @@ Deno.serve(async (req) => {
 
             const existing = existingBoletos.get(ixcBoletoId);
             if (existing) {
-              // Update if status or value changed
               if (existing.status !== status || Number(existing.boleto_value) !== valor || existing.due_date !== dataVencimento) {
-                boletosToUpdate.push({
-                  id: existing.id,
-                  status,
-                  boleto_value: valor,
-                  due_date: dataVencimento,
-                });
+                boletosToUpdate.push({ id: existing.id, status, boleto_value: valor, due_date: dataVencimento });
               }
             } else {
               boletosToInsert.push({
@@ -369,18 +472,18 @@ Deno.serve(async (req) => {
             processedCount++;
           }
 
-          // Insert new boletos in chunks
           if (boletosToInsert.length > 0) {
             for (let i = 0; i < boletosToInsert.length; i += 200) {
+              if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
               const chunk = boletosToInsert.slice(i, i + 200);
               const { error } = await supabase.from('client_boletos').insert(chunk);
               if (error) orgResult.errors.push(`Boleto insert error: ${error.message}`);
             }
           }
 
-          // Update existing boletos using batch RPC
           if (boletosToUpdate.length > 0) {
             for (let i = 0; i < boletosToUpdate.length; i += 500) {
+              if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
               const chunk = boletosToUpdate.slice(i, i + 500);
               const { error } = await supabase.rpc('batch_upsert_boletos', {
                 p_ids: chunk.map(b => b.id),
@@ -396,8 +499,32 @@ Deno.serve(async (req) => {
           orgResult.boletos_inserted = boletosToInsert.length;
           orgResult.boletos_updated = boletosToUpdate.length;
         }
+
+        // Mark sync as completed
+        if (syncId) {
+          await updateSyncLog(supabase, syncId, {
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            records_created: (orgResult.clients_inserted || 0) + (orgResult.boletos_inserted || 0),
+            records_updated: (orgResult.clients_updated || 0) + (orgResult.boletos_updated || 0),
+          });
+        }
       } catch (e: any) {
-        orgResult.errors.push(e.message);
+        if (e.message === 'CANCELLED') {
+          orgResult.errors.push('Sincronização cancelada pelo usuário');
+          if (syncId) {
+            await updateSyncLog(supabase, syncId, { status: 'cancelled', completed_at: new Date().toISOString() });
+          }
+        } else {
+          orgResult.errors.push(e.message);
+          if (syncId) {
+            await updateSyncLog(supabase, syncId, {
+              status: 'error',
+              error_message: e.message,
+              completed_at: new Date().toISOString(),
+            });
+          }
+        }
       }
 
       results.push(orgResult);
