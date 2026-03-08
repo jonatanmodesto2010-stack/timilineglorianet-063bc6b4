@@ -77,8 +77,8 @@ const Clients = () => {
   const loadFiliais = async () => {
     if (!organizationId) return;
     try {
-      const { data } = await supabaseClient
-        .from('client_timelines')
+      const { data } = await (supabaseClient as any)
+        .from('unique_client_timelines')
         .select('ixc_filial_id, ixc_filial_name')
         .eq('organization_id', organizationId)
         .not('ixc_filial_id', 'is', null)
