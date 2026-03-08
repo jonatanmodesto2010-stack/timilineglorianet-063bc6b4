@@ -389,20 +389,7 @@ const Auth = () => {
             </form>
           )}
 
-          {!isResetMode && !isForgotPassword && (
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
-                className="text-sm text-primary hover:underline"
-              >
-                {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Entre'}
-              </button>
-            </div>
-          )}
+          {/* Signup público desabilitado - criação apenas por admin */}
         </div>
       </motion.div>
     </div>
