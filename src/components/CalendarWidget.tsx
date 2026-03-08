@@ -61,7 +61,8 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
       const { data: timelines } = await supabaseClient
         .from('client_timelines')
         .select('id, client_name')
-        .eq('organization_id', organizationId);
+        .eq('organization_id', organizationId)
+        .eq('is_active', true);
 
       if (!timelines || timelines.length === 0) {
         setEvents([]);
@@ -82,7 +83,7 @@ export const CalendarWidget = ({ organizationId, onClientClick }: CalendarWidget
       const lineIds = lines.map(l => l.id);
       const { data: eventsData } = await supabaseClient
         .from('timeline_events')
-        .select('*')
+        .select('id, event_date, event_time, description, status, icon, line_id')
         .in('line_id', lineIds);
 
       const mapped = (eventsData || []).map(event => {

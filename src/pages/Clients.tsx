@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Plus, History, Loader2, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -70,7 +69,7 @@ const Clients = () => {
       
       // Fetch ALL timelines bypassing 1000 limit
       const data = await fetchAllPaginated('client_timelines', {
-        select: '*',
+        select: 'id, client_name, client_id, status, is_active, organization_id, ixc_filial_id, ixc_filial_name, start_date, created_at, updated_at, user_id, completed_at, completion_notes, boleto_value, due_date',
         eq: [['organization_id', organizationId]],
         order: ['client_name', { ascending: true }],
       });
@@ -287,7 +286,7 @@ const Clients = () => {
           <div className="max-w-7xl mx-auto flex gap-6">
             {/* Left Column - Client List */}
             <div className="flex-1 min-w-0">
-              <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="animate-fade-in">
                 <div className="flex items-center gap-4 mb-6">
                   <h2 className="text-2xl font-bold text-foreground">Clientes</h2>
                   {filiais.length > 0 && (
@@ -339,25 +338,21 @@ const Clients = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <motion.button
+                    <button
                       onClick={() => navigate('/history')}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap"
+                      className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap hover-scale"
                     >
                       <History size={18} />
                       Histórico
-                    </motion.button>
+                    </button>
 
-                    <motion.button
+                    <button
                       onClick={() => setNewClientModalOpen(true)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-6 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap"
+                      className="px-6 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap hover-scale"
                     >
                       <Plus size={18} />
                       Novo Cliente
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
 
@@ -371,12 +366,9 @@ const Clients = () => {
                     {paginatedClients.map((client, index) => {
                       const info = getClientBadgeInfo(client);
                       return (
-                        <motion.div
+                        <div
                           key={client.primaryTimeline.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: Math.min(index * 0.03, 0.3) }}
-                          className={`w-full rounded-lg p-4 flex items-center gap-4 transition-colors hover:opacity-90 cursor-pointer ${getCardStyle(info)}`}
+                          className={`w-full rounded-lg p-4 flex items-center gap-4 transition-all duration-150 hover:opacity-90 cursor-pointer ${getCardStyle(info)}`}
                           onClick={() => handleOpenModal(client)}
                         >
                           <div className="flex-1 min-w-0">
@@ -427,12 +419,12 @@ const Clients = () => {
                               <TrendingUp className="w-4 h-4" />
                             </Button>
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
                 )}
-              </motion.div>
+              </div>
             </div>
 
             {/* Right Column - Widgets */}

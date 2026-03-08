@@ -112,7 +112,7 @@ export const ClientDashboardModal = ({
 
     const { data, error } = await supabase
       .from('tags')
-      .select('*')
+      .select('id, name, color')
       .eq('organization_id', client.organization_id)
       .order('name');
 
@@ -135,7 +135,7 @@ export const ClientDashboardModal = ({
   const loadAnalysisHistory = async () => {
     const { data, error } = await supabase
       .from('client_analysis_history')
-      .select('*')
+      .select('id, timeline_id, analysis_data, risk_score, risk_level, created_at')
       .eq('timeline_id', client.id)
       .order('created_at', { ascending: false })
       .limit(5);
@@ -148,7 +148,7 @@ export const ClientDashboardModal = ({
   const loadBoletos = async () => {
     const { data, error } = await supabase
       .from('client_boletos')
-      .select('*')
+      .select('id, boleto_value, due_date, status, description')
       .eq('timeline_id', client.id)
       .order('due_date', { ascending: true });
 
@@ -177,7 +177,7 @@ export const ClientDashboardModal = ({
 
         const { data: events, error: eventsError } = await supabase
           .from('timeline_events')
-          .select('*')
+          .select('id, event_date, event_time, description, status, icon, line_id, event_order, position')
           .in('line_id', lineIds)
           .order('event_date', { ascending: false });
 
