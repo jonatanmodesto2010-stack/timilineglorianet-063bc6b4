@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { exportManualPDF } from '@/lib/manual-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Accordion,
