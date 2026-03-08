@@ -143,7 +143,7 @@ export const IntegrationsSettings = () => {
             <Input value={apiUrlContracts} onChange={(e) => setApiUrlContracts(e.target.value)} placeholder="URL alternativa para consultar contratos" />
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2">
             <Button onClick={handleTestConnection} variant="outline" disabled={testing}>
               {testing && <Loader2 size={16} className="mr-2 animate-spin" />}
               Testar Conexão
@@ -153,6 +153,66 @@ export const IntegrationsSettings = () => {
               Salvar Configurações
             </Button>
           </div>
+
+          {integration && (
+            <div className="border-t border-border pt-4 mt-4 space-y-3">
+              <h4 className="text-sm font-semibold">Sincronização Manual</h4>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  disabled={syncing}
+                  onClick={async () => {
+                    setSyncing(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke('ixc-sync', {
+                        body: { action: 'sync', organization_id: organizationId },
+                      });
+                      if (error) throw error;
+                      const r = data?.results?.[0];
+                      toast({
+                        title: 'Sincronização concluída',
+                        description: `${r?.clients || 0} clientes processados, ${r?.boletos || 0} boletos processados. ${r?.boletos_inserted || 0} novos, ${r?.boletos_updated || 0} atualizados.`,
+                      });
+                    } catch (err: any) {
+                      toast({ title: 'Erro na sincronização', description: err.message, variant: 'destructive' });
+                    } finally {
+                      setSyncing(false);
+                    }
+                  }}
+                >
+                  {syncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
+                  Sincronizar Tudo
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={syncingBoletos}
+                  onClick={async () => {
+                    setSyncingBoletos(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke('ixc-sync', {
+                        body: { action: 'sync_boletos', organization_id: organizationId },
+                      });
+                      if (error) throw error;
+                      const r = data?.results?.[0];
+                      toast({
+                        title: 'Boletos sincronizados',
+                        description: `${r?.boletos || 0} boletos processados. ${r?.boletos_inserted || 0} novos, ${r?.boletos_updated || 0} atualizados.`,
+                      });
+                    } catch (err: any) {
+                      toast({ title: 'Erro ao sincronizar boletos', description: err.message, variant: 'destructive' });
+                    } finally {
+                      setSyncingBoletos(false);
+                    }
+                  }}
+                >
+                  {syncingBoletos ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
+                  Sincronizar Boletos
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">A sincronização automática ocorre a cada 10 minutos via cron.</p>
+            </div>
+          )}
+          
         </div>
       </div>
     </div>
