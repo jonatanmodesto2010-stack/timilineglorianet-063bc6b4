@@ -13,6 +13,8 @@ export interface ClientTimeline {
   completed_at?: string | null;
   completion_notes?: string | null;
   user_id: string;
+  ixc_filial_id?: string | null;
+  ixc_filial_name?: string | null;
 }
 
 export interface GroupedClient {
