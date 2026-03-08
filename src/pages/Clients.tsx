@@ -18,6 +18,7 @@ import { fetchAllPaginated, fetchInChunks } from '@/lib/supabase-helpers';
 import { groupTimelinesByClient, sortClients, calculateOverdueDays, type ClientTimeline, type GroupedClient } from '@/lib/client-utils';
 import type { User } from '@supabase/supabase-js';
 import { ClientTimelineDialog } from '@/components/ClientTimelineDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ITEMS_PER_PAGE = 30;
 
