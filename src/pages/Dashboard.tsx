@@ -182,7 +182,12 @@ const Dashboard = () => {
                 <h2 className="text-2xl font-bold text-foreground">Dashboard de Cobrança</h2>
                 <p className="text-muted-foreground">Visão geral financeira e métricas de cobrança</p>
               </motion.div>
-              {!loading && <DelinquentsExport timelines={allTimelines} boletos={boletos} />}
+              {!loading && (
+                <div className="flex items-center gap-2">
+                  <DashboardDateFilter value={dateRange} onChange={setDateRange} />
+                  <DelinquentsExport timelines={allTimelines} boletos={boletos} />
+                </div>
+              )}
             </div>
 
             {loading ? (
