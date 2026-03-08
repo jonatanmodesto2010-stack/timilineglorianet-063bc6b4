@@ -74,7 +74,7 @@ const Clients = () => {
   // Load clients when filters/page change
   useEffect(() => {
     if (organizationId) loadClients();
-  }, [organizationId, currentPage, searchTerm, statusFilter, filialFilter]);
+  }, [organizationId, currentPage, searchTerm, statusFilter, filialClientIds]);
 
   const loadFiliais = async () => {
     if (!organizationId) return;
