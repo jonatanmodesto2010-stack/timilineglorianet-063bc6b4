@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, History, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2 } from 'lucide-react';
-import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
+import { AppLayout } from '@/components/AppLayout';
 import { ClientDashboardModal } from '@/components/ClientDashboardModal';
 import { ClientSearchFilters } from '@/components/ClientSearchFilters';
 import { CalendarWidget } from '@/components/CalendarWidget';
