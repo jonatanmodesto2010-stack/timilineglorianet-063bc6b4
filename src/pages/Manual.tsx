@@ -36,6 +36,8 @@ const SECTIONS = [
   { value: 'dicas', title: 'Dicas e Boas Práticas', keywords: 'dicas boas práticas organização cobrança efetiva sincronização ixc segurança papéis viewers owners' },
 ] as const;
 
+type Section = { value: string; title: string; keywords: string; restricted?: string };
+
 const Manual = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
