@@ -47,7 +47,9 @@ const Clients = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [filialFilter, setFilialFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'default' | 'overdue_desc' | 'overdue_asc'>('default');
-  const [filiais, setFiliais] = useState<[string, string][]>([]);
+  const [filiais, setFiliais] = useState<{ id: string; name: string }[]>([]);
+  const [filialClientIds, setFilialClientIds] = useState<string[] | null>(null);
+  const [filialLoading, setFilialLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -72,26 +74,16 @@ const Clients = () => {
   // Load clients when filters/page change
   useEffect(() => {
     if (organizationId) loadClients();
-  }, [organizationId, currentPage, searchTerm, statusFilter, filialFilter]);
+  }, [organizationId, currentPage, searchTerm, statusFilter, filialClientIds]);
 
   const loadFiliais = async () => {
     if (!organizationId) return;
     try {
-      const { data } = await (supabaseClient as any)
-        .from('unique_client_timelines')
-        .select('ixc_filial_id, ixc_filial_name')
-        .eq('organization_id', organizationId)
-        .not('ixc_filial_id', 'is', null)
-        .not('ixc_filial_name', 'is', null);
-      
-      if (data) {
-        const map = new Map<string, string>();
-        for (const t of data) {
-          if (t.ixc_filial_id && t.ixc_filial_name) {
-            map.set(t.ixc_filial_id, t.ixc_filial_name);
-          }
-        }
-        setFiliais(Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1])));
+      const { data, error } = await supabase.functions.invoke('ixc-sync', {
+        body: { action: 'list_filiais', organization_id: organizationId },
+      });
+      if (!error && data?.filiais) {
+        setFiliais(data.filiais.sort((a: any, b: any) => a.name.localeCompare(b.name)));
       }
     } catch (err) {
       console.error('Error loading filiais:', err);
@@ -109,9 +101,17 @@ const Clients = () => {
         .select(CLIENT_COLUMNS, { count: 'exact' })
         .eq('organization_id', organizationId);
 
-      // Server-side filters
-      if (filialFilter !== 'all') {
-        query = query.eq('ixc_filial_id', filialFilter);
+      // Filter by filial client IDs (from IXC API)
+      if (filialClientIds !== null && filialClientIds.length > 0) {
+        query = query.in('client_id', filialClientIds);
+      } else if (filialClientIds !== null && filialClientIds.length === 0) {
+        // Filial selected but no clients found - return empty
+        setClients([]);
+        setTotalCount(0);
+        setOverdueDaysMap(new Map());
+        setOnlineClients(new Set());
+        setLoading(false);
+        return;
       }
 
       if (searchTerm) {
@@ -227,9 +227,44 @@ const Clients = () => {
   };
 
 
+  // When filial changes, fetch client IDs from IXC API
+  useEffect(() => {
+    if (filialFilter === 'all') {
+      setFilialClientIds(null);
+      setCurrentPage(1);
+      return;
+    }
+    const selectedFilial = filiais.find(f => f.id === filialFilter);
+    const fetchFilialClients = async () => {
+      setFilialLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ixc-sync', {
+          body: {
+            action: 'clients_by_filial',
+            organization_id: organizationId,
+            filial_id: filialFilter,
+            filial_name: selectedFilial?.name || `Filial ${filialFilter}`,
+          },
+        });
+        if (!error && data?.client_ids) {
+          setFilialClientIds(data.client_ids);
+        } else {
+          setFilialClientIds([]);
+        }
+      } catch (err) {
+        console.error('Error fetching filial clients:', err);
+        setFilialClientIds([]);
+      } finally {
+        setFilialLoading(false);
+      }
+      setCurrentPage(1);
+    };
+    fetchFilialClients();
+  }, [filialFilter, organizationId]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, filialFilter]);
+  }, [searchTerm, statusFilter]);
 
   // Sort clients based on sortBy option
   const sortedClients = useMemo(() => {
@@ -364,8 +399,8 @@ const Clients = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas filiais</SelectItem>
-                        {filiais.map(([id, name]) => (
-                          <SelectItem key={id} value={id}>{name}</SelectItem>
+                        {filiais.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
