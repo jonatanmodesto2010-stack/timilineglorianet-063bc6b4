@@ -23,6 +23,7 @@ const menuItems = [
   { icon: Calendar, label: 'Calendário', path: '/calendar' },
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: BarChart3, label: 'Relatórios', path: '/reports' },
+  { icon: CreditCard, label: 'Assinatura', path: '/subscription' },
   { icon: Settings, label: 'Configurações', path: '/settings' },
   { icon: BookOpen, label: 'Manual', path: '/manual' },
 ];
