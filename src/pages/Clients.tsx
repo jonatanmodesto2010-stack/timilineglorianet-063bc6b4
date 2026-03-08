@@ -69,7 +69,7 @@ const Clients = () => {
       
       // Fetch ALL timelines bypassing 1000 limit
       const data = await fetchAllPaginated('client_timelines', {
-        select: '*',
+        select: 'id, client_name, client_id, status, is_active, organization_id, ixc_filial_id, ixc_filial_name, start_date, created_at, updated_at, user_id, completed_at, completion_notes, boleto_value, due_date',
         eq: [['organization_id', organizationId]],
         order: ['client_name', { ascending: true }],
       });
