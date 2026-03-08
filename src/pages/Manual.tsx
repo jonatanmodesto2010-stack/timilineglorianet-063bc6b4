@@ -19,7 +19,7 @@ import {
   Users, Calendar, LayoutDashboard, BarChart3, Settings,
   Shield, BookOpen, Clock, Tag, Palette, Link2, FileText,
   UserPlus, Bell, Search, Filter, Plus, CheckCircle2,
-  AlertTriangle, Info, Zap, Lock, Eye, X
+  AlertTriangle, Info, Zap, Lock, Eye, X, Download
 } from 'lucide-react';
 
 // Searchable section definitions
