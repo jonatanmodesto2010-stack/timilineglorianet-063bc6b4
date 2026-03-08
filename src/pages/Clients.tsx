@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, History, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2 } from 'lucide-react';
+import { Plus, History, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2, Wifi, WifiOff } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { ClientDashboardModal } from '@/components/ClientDashboardModal';
 import { ClientSearchFilters } from '@/components/ClientSearchFilters';
@@ -26,6 +26,8 @@ const Clients = () => {
   const [clients, setClients] = useState<ClientTimeline[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [overdueDaysMap, setOverdueDaysMap] = useState<Map<string, number>>(new Map());
+  const [onlineClients, setOnlineClients] = useState<Set<string>>(new Set());
+  const [onlineLoading, setOnlineLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [overdueDaysLoading, setOverdueDaysLoading] = useState(false);
@@ -147,8 +149,16 @@ const Clients = () => {
       // Load overdue days in background for visible clients only
       if (data && data.length > 0) {
         loadOverdueDays(data);
+        // Load online status for blocked clients
+        const blockedClients = data.filter(c => !c.is_active && c.status !== 'archived' && c.status !== 'completed');
+        if (blockedClients.length > 0) {
+          loadOnlineStatus(blockedClients);
+        } else {
+          setOnlineClients(new Set());
+        }
       } else {
         setOverdueDaysMap(new Map());
+        setOnlineClients(new Set());
       }
     } catch (error: any) {
       console.error('Error loading clients:', error);
@@ -187,8 +197,35 @@ const Clients = () => {
       setOverdueDaysLoading(false);
     }
   };
+  const loadOnlineStatus = async (blockedClients: ClientTimeline[]) => {
+    try {
+      setOnlineLoading(true);
+      const clientIds = blockedClients.map(c => c.client_id).filter(Boolean);
+      if (clientIds.length === 0) {
+        setOnlineClients(new Set());
+        return;
+      }
 
-  // Reset page on filter change
+      const { data, error } = await supabase.functions.invoke('ixc-check-online', {
+        body: { organization_id: organizationId, client_ids: clientIds },
+      });
+
+      if (error) {
+        console.error('Error checking online status:', error);
+        return;
+      }
+
+      if (data?.online_clients) {
+        setOnlineClients(new Set(data.online_clients.map(String)));
+      }
+    } catch (err) {
+      console.error('Error loading online status:', err);
+    } finally {
+      setOnlineLoading(false);
+    }
+  };
+
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, filialFilter]);
@@ -404,10 +441,25 @@ const Clients = () => {
                             )}
 
                             {info.isBlocked && (
-                              <div className="px-3 py-1 bg-red-500/20 text-red-400 text-xs rounded-full flex items-center gap-1 font-semibold border border-red-500/30">
-                                <Lock size={12} />
-                                BLOQUEADO
-                              </div>
+                              <>
+                                <div className="px-3 py-1 bg-red-500/20 text-red-400 text-xs rounded-full flex items-center gap-1 font-semibold border border-red-500/30">
+                                  <Lock size={12} />
+                                  BLOQUEADO
+                                </div>
+                                {client.client_id && (
+                                  onlineClients.has(client.client_id) ? (
+                                    <div className="px-2.5 py-1 bg-green-500/20 text-green-400 text-xs rounded-full flex items-center gap-1 font-semibold border border-green-500/30">
+                                      <Wifi size={11} />
+                                      ONLINE
+                                    </div>
+                                  ) : !onlineLoading ? (
+                                    <div className="px-2.5 py-1 bg-muted text-muted-foreground text-xs rounded-full flex items-center gap-1 font-semibold border border-border">
+                                      <WifiOff size={11} />
+                                      OFFLINE
+                                    </div>
+                                  ) : null
+                                )}
+                              </>
                             )}
 
                             {info.isInactive && (
