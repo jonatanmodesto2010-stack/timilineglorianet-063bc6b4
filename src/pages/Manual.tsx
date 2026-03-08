@@ -553,7 +553,7 @@ const Manual = () => {
                   <li>Apenas Owners podem excluir integrações</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
           </Accordion>
         </ScrollArea>
