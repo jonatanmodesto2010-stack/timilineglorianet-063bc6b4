@@ -12,6 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ClientPriorityList } from '@/components/ClientPriorityList';
 import { CollectionActionsWidget } from '@/components/CollectionActionsWidget';
 import { AgreementsOverdueWidget } from '@/components/AgreementsOverdueWidget';
+import { DelinquentsExport } from '@/components/DelinquentsExport';
 
 interface BoletoData {
   timeline_id: string;
