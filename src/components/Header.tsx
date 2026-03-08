@@ -1,4 +1,6 @@
 import { Sun, Moon, LogOut, User } from 'lucide-react';
+import { APP_NAME } from '@/config/version';
+import logo from '@/assets/logo.png';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -67,14 +69,14 @@ export const Header = () => {
     >
       <div className="flex items-center gap-4">
         <SidebarTrigger className="-ml-2" />
-        <motion.h1 
-          className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent"
+        <motion.div 
+          className="flex items-center"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
         >
-          Cobra Fácil
-        </motion.h1>
+          <img src={logo} alt={APP_NAME} className="h-8 object-contain" />
+        </motion.div>
       </div>
 
       <div className="flex items-center gap-3">
