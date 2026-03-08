@@ -184,6 +184,13 @@ export type Database = {
             referencedRelation: "client_timelines"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "client_agreements_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "unique_client_timelines"
+            referencedColumns: ["id"]
+          },
         ]
       }
       client_analysis_history: {
@@ -217,6 +224,13 @@ export type Database = {
             columns: ["timeline_id"]
             isOneToOne: false
             referencedRelation: "client_timelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_analysis_history_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "unique_client_timelines"
             referencedColumns: ["id"]
           },
         ]
@@ -263,6 +277,13 @@ export type Database = {
             referencedRelation: "client_timelines"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "client_boletos_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "unique_client_timelines"
+            referencedColumns: ["id"]
+          },
         ]
       }
       client_timeline_tags: {
@@ -297,6 +318,13 @@ export type Database = {
             columns: ["timeline_id"]
             isOneToOne: false
             referencedRelation: "client_timelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_timeline_tags_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "unique_client_timelines"
             referencedColumns: ["id"]
           },
         ]
@@ -443,6 +471,13 @@ export type Database = {
             columns: ["timeline_id"]
             isOneToOne: false
             referencedRelation: "client_timelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_actions_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "unique_client_timelines"
             referencedColumns: ["id"]
           },
         ]
@@ -1132,6 +1167,13 @@ export type Database = {
             referencedRelation: "client_timelines"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "timeline_lines_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "unique_client_timelines"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_preferences: {
@@ -1199,7 +1241,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      unique_client_timelines: {
+        Row: {
+          boleto_value: number | null
+          client_id: string | null
+          client_name: string | null
+          completed_at: string | null
+          completion_notes: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string | null
+          is_active: boolean | null
+          ixc_filial_id: string | null
+          ixc_filial_name: string | null
+          organization_id: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_timelines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_timelines_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_user_to_organization: {
