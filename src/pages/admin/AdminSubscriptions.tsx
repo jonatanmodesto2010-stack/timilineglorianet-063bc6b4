@@ -461,7 +461,4 @@ const AdminSubscriptions = () => {
   );
 };
 
-// Missing import
-import { Edit } from 'lucide-react';
-
 export default AdminSubscriptions;
