@@ -578,7 +578,150 @@ Deno.serve(async (req) => {
           console.log(`[sync] Boleto sync done in ${((Date.now() - boletoStart) / 1000).toFixed(1)}s`);
         }
 
-        // Mark sync as completed
+        // === SYNC CONTAS A RECEBER ===
+        if (action === 'sync_areceber') {
+          if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
+
+          console.log(`[sync] Starting contas a receber sync`);
+          const aReceberStart = Date.now();
+
+          // Fetch all pending receivables (status != R and != C)
+          const aReceber = await fetchAllIxcRecordsWithProgress(api_url, token, 'fn_areceber', supabase, syncId, {
+            qtype: 'fn_areceber.id',
+            query: '0',
+            oper: '>',
+            grid_param: JSON.stringify([
+              { TB: 'fn_areceber.status', OP: '!=', P: 'R' },
+              { TB: 'fn_areceber.status', OP: '!=', P: 'C' },
+            ]),
+          });
+          console.log(`[sync] Fetched ${aReceber.length} pending receivables in ${((Date.now() - aReceberStart) / 1000).toFixed(1)}s`);
+
+          if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
+
+          // Get existing timelines
+          const { data: existingTimelines } = await supabase
+            .from('client_timelines')
+            .select('id, client_id')
+            .eq('organization_id', organization_id);
+
+          const clientToTimeline = new Map<string, string>();
+          const knownClientIds = new Set<string>();
+          for (const t of (existingTimelines || [])) {
+            if (t.client_id) {
+              clientToTimeline.set(t.client_id, t.id);
+              knownClientIds.add(t.client_id);
+            }
+          }
+
+          // Aggregate debt per client from pending receivables
+          const debtPerClient = new Map<string, number>();
+          const newClientIds = new Set<string>();
+
+          for (const item of aReceber) {
+            const clientId = String(item.id_cliente);
+            const valor = parseFloat(item.valor || '0');
+            debtPerClient.set(clientId, (debtPerClient.get(clientId) || 0) + valor);
+
+            if (!knownClientIds.has(clientId)) {
+              newClientIds.add(clientId);
+            }
+          }
+
+          console.log(`[sync] ${debtPerClient.size} clients with pending debt, ${newClientIds.size} new clients to discover`);
+
+          // Discover new clients
+          let newClientsInserted = 0;
+          if (newClientIds.size > 0) {
+            // Get a user_id for this org
+            const { data: orgUsers } = await supabase
+              .from('user_roles')
+              .select('user_id')
+              .eq('organization_id', organization_id)
+              .in('role', ['owner', 'admin'])
+              .limit(1);
+            const defaultUserId = orgUsers?.[0]?.user_id;
+
+            if (defaultUserId) {
+              const toInsert: any[] = [];
+              const newClientIdArray = [...newClientIds];
+
+              for (let i = 0; i < newClientIdArray.length; i++) {
+                if (i > 0 && i % 10 === 0) {
+                  await delay(200);
+                  if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
+                }
+                try {
+                  const { registros } = await ixcRequest(api_url, token, 'cliente', 1, 1, {
+                    qtype: 'id',
+                    query: newClientIdArray[i],
+                    oper: '=',
+                  });
+                  if (registros.length > 0) {
+                    const client = registros[0];
+                    const clientName = client.razao || client.fantasia || `Cliente ${client.id}`;
+                    const filialId = client.id_filial ? String(client.id_filial) : null;
+
+                    toInsert.push({
+                      client_id: newClientIdArray[i],
+                      client_name: clientName,
+                      is_active: true,
+                      status: 'active',
+                      organization_id,
+                      user_id: defaultUserId,
+                      start_date: new Date().toISOString().split('T')[0],
+                      ixc_filial_id: filialId,
+                      boleto_value: debtPerClient.get(newClientIdArray[i]) || null,
+                    });
+                    // Also map for debt update
+                    clientToTimeline.set(newClientIdArray[i], ''); // placeholder
+                  }
+                } catch (e) {
+                  console.log(`Could not fetch client ${newClientIdArray[i]}: ${e.message}`);
+                }
+              }
+
+              if (toInsert.length > 0) {
+                for (let i = 0; i < toInsert.length; i += 200) {
+                  if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
+                  const chunk = toInsert.slice(i, i + 200);
+                  const { error } = await supabase.from('client_timelines').insert(chunk);
+                  if (error) orgResult.errors.push(`Insert error: ${error.message}`);
+                  else newClientsInserted += chunk.length;
+                }
+              }
+            }
+          }
+
+          // Update boleto_value (total pending debt) for existing clients
+          let updatedDebtCount = 0;
+          const debtUpdates: { id: string; value: number }[] = [];
+          for (const [clientId, totalDebt] of debtPerClient) {
+            const timelineId = clientToTimeline.get(clientId);
+            if (timelineId && timelineId !== '') {
+              debtUpdates.push({ id: timelineId, value: totalDebt });
+            }
+          }
+
+          // Batch update boleto_value
+          for (let i = 0; i < debtUpdates.length; i += 50) {
+            if (await checkCancelled(supabase, syncId)) throw new Error('CANCELLED');
+            const chunk = debtUpdates.slice(i, i + 50);
+            for (const upd of chunk) {
+              const { error } = await supabase
+                .from('client_timelines')
+                .update({ boleto_value: upd.value })
+                .eq('id', upd.id);
+              if (!error) updatedDebtCount++;
+            }
+          }
+
+          orgResult.areceber_total = aReceber.length;
+          orgResult.clients_discovered = newClientsInserted;
+          orgResult.debt_updated = updatedDebtCount;
+          console.log(`[sync] Contas a receber done in ${((Date.now() - aReceberStart) / 1000).toFixed(1)}s: ${newClientsInserted} new clients, ${updatedDebtCount} debts updated`);
+        }
+
         if (syncId) {
           await updateSyncLog(supabase, syncId, {
             status: 'completed',
