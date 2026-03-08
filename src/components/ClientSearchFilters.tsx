@@ -163,7 +163,10 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="active">Ativos</SelectItem>
+                    <SelectItem value="blocked">Bloqueados</SelectItem>
+                    <SelectItem value="overdue">Vencidos</SelectItem>
                     <SelectItem value="inactive">Inativos</SelectItem>
+                    <SelectItem value="completed">Finalizados</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
