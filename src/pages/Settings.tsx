@@ -7,7 +7,7 @@ import { GeneralSettings } from '@/components/settings/GeneralSettings';
 import { UserProfile } from '@/components/settings/UserProfile';
 import { TagsManagement } from '@/components/settings/TagsManagement';
 import { IconsManagement } from '@/components/settings/IconsManagement';
-import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
+
 import { HistorySettings } from '@/components/settings/HistorySettings';
 import { ColorThemeSettings } from '@/components/settings/ColorThemeSettings';
 import { CollectionRulesSettings } from '@/components/settings/CollectionRulesSettings';
@@ -65,7 +65,7 @@ const Settings = () => {
                   <TabsTrigger value="colors">Paleta de Cores</TabsTrigger>
                   <TabsTrigger value="tags">Tags</TabsTrigger>
                   <TabsTrigger value="icons">Ícones</TabsTrigger>
-                   <TabsTrigger value="integrations">Integrações</TabsTrigger>
+                   
                    <TabsTrigger value="collection">Régua de Cobrança</TabsTrigger>
                 </>
               )}
@@ -95,9 +95,6 @@ const Settings = () => {
                 </TabsContent>
                 <TabsContent value="icons">
                   <IconsManagement />
-                </TabsContent>
-                <TabsContent value="integrations">
-                  <IntegrationsSettings />
                 </TabsContent>
                 <TabsContent value="collection">
                   <CollectionRulesSettings />

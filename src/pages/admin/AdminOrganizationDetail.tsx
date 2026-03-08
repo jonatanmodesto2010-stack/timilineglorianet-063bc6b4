@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, Save, UserPlus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminOrgIntegrations } from '@/components/admin/AdminOrgIntegrations';
 import { useToast } from '@/hooks/use-toast';
 
 interface OrgUser {
@@ -202,6 +203,8 @@ const AdminOrganizationDetail = () => {
             </Table>
           </CardContent>
         </Card>
+
+        <AdminOrgIntegrations organizationId={id!} />
 
         <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
           <DialogContent>
