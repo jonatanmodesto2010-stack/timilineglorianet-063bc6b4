@@ -251,10 +251,10 @@ const Manual = () => {
                   <li>Atualize o status dos eventos conforme o retorno do cliente</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* CALENDÁRIO */}
-            <AccordionItem value="calendario" className="border rounded-lg px-4">
+            {isVisible('calendario') && <AccordionItem value="calendario" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
