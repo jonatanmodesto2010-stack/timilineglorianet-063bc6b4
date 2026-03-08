@@ -227,9 +227,44 @@ const Clients = () => {
   };
 
 
+  // When filial changes, fetch client IDs from IXC API
+  useEffect(() => {
+    if (filialFilter === 'all') {
+      setFilialClientIds(null);
+      setCurrentPage(1);
+      return;
+    }
+    const selectedFilial = filiais.find(f => f.id === filialFilter);
+    const fetchFilialClients = async () => {
+      setFilialLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ixc-sync', {
+          body: {
+            action: 'clients_by_filial',
+            organization_id: organizationId,
+            filial_id: filialFilter,
+            filial_name: selectedFilial?.name || `Filial ${filialFilter}`,
+          },
+        });
+        if (!error && data?.client_ids) {
+          setFilialClientIds(data.client_ids);
+        } else {
+          setFilialClientIds([]);
+        }
+      } catch (err) {
+        console.error('Error fetching filial clients:', err);
+        setFilialClientIds([]);
+      } finally {
+        setFilialLoading(false);
+      }
+      setCurrentPage(1);
+    };
+    fetchFilialClients();
+  }, [filialFilter, organizationId]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, filialFilter]);
+  }, [searchTerm, statusFilter]);
 
   // Sort clients based on sortBy option
   const sortedClients = useMemo(() => {
