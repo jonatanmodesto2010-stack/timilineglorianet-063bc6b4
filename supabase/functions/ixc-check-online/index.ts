@@ -111,9 +111,14 @@ Deno.serve(async (req) => {
         console.log(`radusuarios for client ${sampleClientId}: ${registros.length} records (total: ${total})`);
         
         if (registros.length > 0) {
-          // Log ALL fields of first record
-          const record = registros[0];
-          console.log('ALL FIELDS:', JSON.stringify(record));
+          // Log field names
+          const keys = Object.keys(registros[0]);
+          console.log('KEYS: ' + keys.join(','));
+          // Log online-related values for all records
+          for (let i = 0; i < registros.length; i++) {
+            const r = registros[i];
+            console.log(`REC${i}: online=${r.online} ativo=${r.ativo} status=${r.status} tipo=${r.tipo_autenticacao || r.tipo} id=${r.id}`);
+          }
         }
       } catch (err: any) {
         console.error(`radusuarios query failed: ${err.message}`);
