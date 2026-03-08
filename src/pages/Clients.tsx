@@ -284,22 +284,18 @@ const Clients = () => {
 
   if (loading && clients.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="flex flex-1 w-full">
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="flex-1 p-6 overflow-auto">
-            <div className="max-w-7xl mx-auto">
-              <div className="h-9 w-48 bg-muted animate-pulse rounded mb-6" />
-              <div className="flex flex-col gap-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
-                ))}
-              </div>
+      <AppLayout>
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="h-9 w-48 bg-muted animate-pulse rounded mb-6" />
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+              ))}
             </div>
-          </main>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
