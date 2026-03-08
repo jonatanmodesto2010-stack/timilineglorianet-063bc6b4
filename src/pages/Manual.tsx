@@ -34,9 +34,7 @@ const SECTIONS = [
   { value: 'configuracoes', title: 'Configurações', keywords: 'configurações perfil usuários adicionar editar remover geral paleta cores tags ícones integrações ixc sincronização régua cobrança regras histórico auditoria', restricted: 'admin' },
   { value: 'superadmin', title: 'Painel Super Admin', keywords: 'super admin organizações criar plano suspender ativar expiração membros estatísticas', restricted: 'superadmin' },
   { value: 'dicas', title: 'Dicas e Boas Práticas', keywords: 'dicas boas práticas organização cobrança efetiva sincronização ixc segurança papéis viewers owners' },
-] as const;
-
-type Section = { value: string; title: string; keywords: string; restricted?: string };
+] as Section[];
 
 const Manual = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
