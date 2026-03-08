@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, History, Loader2, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2 } from 'lucide-react';
+import { Plus, History, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Lock, Building2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { ClientDashboardModal } from '@/components/ClientDashboardModal';
@@ -13,21 +13,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { supabaseClient } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
-import { fetchAllPaginated, fetchInChunks } from '@/lib/supabase-helpers';
-import { groupTimelinesByClient, sortClients, calculateOverdueDays, type ClientTimeline, type GroupedClient } from '@/lib/client-utils';
+import { calculateOverdueDays, type ClientTimeline, type GroupedClient } from '@/lib/client-utils';
 import type { User } from '@supabase/supabase-js';
 import { ClientTimelineDialog } from '@/components/ClientTimelineDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ITEMS_PER_PAGE = 30;
 
+const CLIENT_COLUMNS = 'id, client_name, client_id, status, is_active, organization_id, ixc_filial_id, ixc_filial_name, start_date, created_at, updated_at, user_id, completed_at, completion_notes, boleto_value, due_date';
+
 const Clients = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [allTimelines, setAllTimelines] = useState<ClientTimeline[]>([]);
+  const [clients, setClients] = useState<ClientTimeline[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [overdueDaysMap, setOverdueDaysMap] = useState<Map<string, number>>(new Map());
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isFiltering, setIsFiltering] = useState(false);
+  const [overdueDaysLoading, setOverdueDaysLoading] = useState(false);
   const { organizationId } = useUserRole();
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -43,6 +45,7 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [filialFilter, setFilialFilter] = useState('all');
+  const [filiais, setFiliais] = useState<[string, string][]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -58,26 +61,96 @@ const Clients = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Load filiais once
+  useEffect(() => {
+    if (!organizationId) return;
+    loadFiliais();
+  }, [organizationId]);
+
+  // Load clients when filters/page change
   useEffect(() => {
     if (organizationId) loadClients();
-  }, [organizationId]);
+  }, [organizationId, currentPage, searchTerm, statusFilter, filialFilter]);
+
+  const loadFiliais = async () => {
+    if (!organizationId) return;
+    try {
+      const { data } = await supabaseClient
+        .from('client_timelines')
+        .select('ixc_filial_id, ixc_filial_name')
+        .eq('organization_id', organizationId)
+        .not('ixc_filial_id', 'is', null)
+        .not('ixc_filial_name', 'is', null);
+      
+      if (data) {
+        const map = new Map<string, string>();
+        for (const t of data) {
+          if (t.ixc_filial_id && t.ixc_filial_name) {
+            map.set(t.ixc_filial_id, t.ixc_filial_name);
+          }
+        }
+        setFiliais(Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1])));
+      }
+    } catch (err) {
+      console.error('Error loading filiais:', err);
+    }
+  };
 
   const loadClients = async () => {
     if (!organizationId) return;
     try {
       setLoading(true);
-      
-      // Fetch ALL timelines bypassing 1000 limit
-      const data = await fetchAllPaginated('client_timelines', {
-        select: 'id, client_name, client_id, status, is_active, organization_id, ixc_filial_id, ixc_filial_name, start_date, created_at, updated_at, user_id, completed_at, completion_notes, boleto_value, due_date',
-        eq: [['organization_id', organizationId]],
-        order: ['client_name', { ascending: true }],
-      });
 
-      setAllTimelines(data || []);
+      // Build server-side query
+      let query = supabaseClient
+        .from('client_timelines')
+        .select(CLIENT_COLUMNS, { count: 'exact' })
+        .eq('organization_id', organizationId);
 
-      // Fetch overdue days for all timelines
-      await loadOverdueDays(data || []);
+      // Server-side filters
+      if (filialFilter !== 'all') {
+        query = query.eq('ixc_filial_id', filialFilter);
+      }
+
+      if (searchTerm) {
+        // Search by name or client_id
+        query = query.or(`client_name.ilike.%${searchTerm}%,client_id.ilike.%${searchTerm}%`);
+      }
+
+      if (statusFilter === 'active') {
+        query = query.eq('is_active', true).eq('status', 'active');
+      } else if (statusFilter === 'blocked') {
+        query = query.eq('is_active', false).not('status', 'in', '("archived","completed")');
+      } else if (statusFilter === 'inactive') {
+        query = query.eq('status', 'archived');
+      } else if (statusFilter === 'completed') {
+        query = query.eq('status', 'completed');
+      }
+      // 'overdue' filter handled after boleto load
+      // 'all' = no extra filter
+
+      // Sort: blocked first (is_active asc), then by name
+      query = query
+        .order('is_active', { ascending: true })
+        .order('client_name', { ascending: true });
+
+      // Paginate server-side
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE - 1;
+      query = query.range(start, end);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+
+      setClients(data || []);
+      setTotalCount(count || 0);
+
+      // Load overdue days in background for visible clients only
+      if (data && data.length > 0) {
+        loadOverdueDays(data);
+      } else {
+        setOverdueDaysMap(new Map());
+      }
     } catch (error: any) {
       console.error('Error loading clients:', error);
       toast({ title: 'Erro ao carregar clientes', description: error.message, variant: 'destructive' });
@@ -88,13 +161,16 @@ const Clients = () => {
 
   const loadOverdueDays = async (timelines: ClientTimeline[]) => {
     try {
+      setOverdueDaysLoading(true);
       const timelineIds = timelines.map(t => t.id);
-      if (timelineIds.length === 0) return;
 
-      const boletos = await fetchInChunks('client_boletos', 'timeline_id', timelineIds, 'timeline_id, due_date, status');
-      
+      const { data: boletos } = await supabaseClient
+        .from('client_boletos')
+        .select('timeline_id, due_date, status')
+        .in('timeline_id', timelineIds);
+
       const boletosMap = new Map<string, { due_date: string; status: string }[]>();
-      for (const b of boletos) {
+      for (const b of (boletos || [])) {
         if (!boletosMap.has(b.timeline_id)) boletosMap.set(b.timeline_id, []);
         boletosMap.get(b.timeline_id)!.push(b);
       }
@@ -108,75 +184,28 @@ const Clients = () => {
       setOverdueDaysMap(map);
     } catch (err) {
       console.error('Error loading overdue days:', err);
+    } finally {
+      setOverdueDaysLoading(false);
     }
   };
-
-  // Extract unique filiais
-  const filiais = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const t of allTimelines) {
-      if (t.ixc_filial_id && t.ixc_filial_name) {
-        map.set(t.ixc_filial_id, t.ixc_filial_name);
-      }
-    }
-    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
-  }, [allTimelines]);
-
-  // Group and sort clients
-  const groupedClients = useMemo(() => {
-    const grouped = groupTimelinesByClient(allTimelines);
-    return sortClients(grouped, overdueDaysMap);
-  }, [allTimelines, overdueDaysMap]);
-
-  // Apply search/status/filial filters
-  const filteredClients = useMemo(() => {
-    let results = groupedClients;
-
-    if (filialFilter !== 'all') {
-      results = results.filter(c => c.primaryTimeline.ixc_filial_id === filialFilter);
-    }
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      results = results.filter(c => 
-        c.client_name.toLowerCase().includes(term) ||
-        (c.client_id && c.client_id.toLowerCase().includes(term))
-      );
-    }
-
-    if (statusFilter === 'active') {
-      results = results.filter(c => c.is_active && c.status === 'active');
-    } else if (statusFilter === 'blocked') {
-      results = results.filter(c => !c.is_active && c.status !== 'archived' && c.status !== 'completed');
-    } else if (statusFilter === 'overdue') {
-      results = results.filter(c => c.is_active && c.status === 'active' && (overdueDaysMap.get(c.primaryTimeline.id) || 0) > 0);
-    } else if (statusFilter === 'inactive') {
-      results = results.filter(c => c.status === 'archived');
-    } else if (statusFilter === 'completed') {
-      results = results.filter(c => c.status === 'completed');
-    }
-
-    return results;
-  }, [groupedClients, searchTerm, statusFilter, overdueDaysMap, filialFilter]);
 
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, filialFilter]);
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredClients.length / ITEMS_PER_PAGE));
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredClients.length);
-  const paginatedClients = filteredClients.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + clients.length, totalCount);
 
-  const handleOpenModal = (client: GroupedClient) => {
-    setSelectedClient(client.primaryTimeline);
+  const handleOpenModal = (client: ClientTimeline) => {
+    setSelectedClient(client);
     setModalOpen(true);
   };
 
-  const handleOpenTimelineDialog = (client: GroupedClient) => {
-    setClientForTimeline(client.primaryTimeline);
+  const handleOpenTimelineDialog = (client: ClientTimeline) => {
+    setClientForTimeline(client);
     setShowClientTimelineDialog(true);
   };
 
@@ -237,8 +266,8 @@ const Clients = () => {
     }
   };
 
-  const getClientBadgeInfo = (client: GroupedClient) => {
-    const overdueDays = overdueDaysMap.get(client.primaryTimeline.id) || 0;
+  const getClientBadgeInfo = (client: ClientTimeline) => {
+    const overdueDays = overdueDaysMap.get(client.id) || 0;
     const isBlocked = !client.is_active && client.status !== 'archived' && client.status !== 'completed';
     const isOverdue = client.is_active && client.status === 'active' && overdueDays > 0;
     const isInactive = client.status === 'archived';
@@ -254,7 +283,7 @@ const Clients = () => {
     return 'bg-card border border-border';
   };
 
-  if (loading) {
+  if (loading && clients.length === 0) {
     return (
       <div className="min-h-screen flex flex-col w-full bg-background">
         <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
@@ -324,7 +353,7 @@ const Clients = () => {
                       <ChevronLeft size={16} />
                     </button>
                     <button onClick={loadClients} className="p-1.5 rounded hover:bg-muted transition-colors" title="Atualizar">
-                      <RefreshCw size={16} />
+                      <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                     </button>
                     <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Próxima página">
                       <ChevronRight size={16} />
@@ -333,14 +362,14 @@ const Clients = () => {
                       <ChevronsRight size={16} />
                     </button>
                     <span className="text-sm text-muted-foreground ml-2">
-                      {startIndex + 1} - {endIndex} / {filteredClients.length}
+                      {totalCount > 0 ? `${startIndex + 1} - ${endIndex} / ${totalCount}` : '0 clientes'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => navigate('/history')}
-                      className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap hover-scale"
+                      className="px-6 py-2 bg-primary/10 text-primary rounded-lg font-semibold hover:bg-primary/20 transition-all flex items-center gap-2 whitespace-nowrap"
                     >
                       <History size={18} />
                       Histórico
@@ -348,7 +377,7 @@ const Clients = () => {
 
                     <button
                       onClick={() => setNewClientModalOpen(true)}
-                      className="px-6 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap hover-scale"
+                      className="px-6 py-2 bg-gradient-primary text-primary-foreground rounded-lg font-semibold hover:bg-gradient-hover transition-all flex items-center gap-2 whitespace-nowrap"
                     >
                       <Plus size={18} />
                       Novo Cliente
@@ -357,17 +386,17 @@ const Clients = () => {
                 </div>
 
                 {/* Client List */}
-                {paginatedClients.length === 0 ? (
+                {clients.length === 0 && !loading ? (
                   <div className="text-center py-20 text-muted-foreground">
                     <p>Nenhum cliente encontrado</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2 w-full">
-                    {paginatedClients.map((client, index) => {
+                    {clients.map((client) => {
                       const info = getClientBadgeInfo(client);
                       return (
                         <div
-                          key={client.primaryTimeline.id}
+                          key={client.id}
                           className={`w-full rounded-lg p-4 flex items-center gap-4 transition-all duration-150 hover:opacity-90 cursor-pointer ${getCardStyle(info)}`}
                           onClick={() => handleOpenModal(client)}
                         >
@@ -378,14 +407,12 @@ const Clients = () => {
                           </div>
 
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            {/* Overdue Days Badge */}
                             {info.overdueDays > 0 && (
                               <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${info.isBlocked ? 'bg-red-500 text-white' : info.isOverdue ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'}`}>
                                 {info.overdueDays}d
                               </div>
                             )}
 
-                            {/* Status Badges */}
                             {info.isBlocked && (
                               <div className="px-3 py-1 bg-red-500/20 text-red-400 text-xs rounded-full flex items-center gap-1 font-semibold border border-red-500/30">
                                 <Lock size={12} />
@@ -405,7 +432,6 @@ const Clients = () => {
                               </div>
                             )}
 
-                            {/* Timeline Button */}
                             <Button
                               variant="outline"
                               size="icon"
