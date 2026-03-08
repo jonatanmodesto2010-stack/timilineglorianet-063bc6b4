@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, CheckCircle, AlertTriangle, Clock, DollarSign, TrendingUp, TrendingDown, BarChart3, PieChart } from 'lucide-react';
+import { Users, CheckCircle, AlertTriangle, Clock, DollarSign, TrendingUp, TrendingDown, BarChart3, PieChart, Building2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { supabase } from '@/integrations/supabase/client';
