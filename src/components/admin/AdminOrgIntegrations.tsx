@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, RefreshCw, Square, AlertTriangle, Save, Wifi, CheckCircle2, XCircle, Clock, Ban, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import {
+  Loader2, RefreshCw, AlertTriangle, Save, Wifi, CheckCircle2, XCircle, Clock, Ban,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, EyeOff, Users, FileText, StopCircle, ShieldAlert
+} from 'lucide-react';
 
 const INTEGRATION_TYPES = [
   { value: 'ixc', label: 'IXC Provedor' },
@@ -89,6 +92,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
   const [apiToken, setApiToken] = useState('');
   const [apiUrlContracts, setApiUrlContracts] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [showToken, setShowToken] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -98,7 +102,6 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
   const lastProgressTimeRef = useRef<number>(0);
   const { toast } = useToast();
 
-  // Sync history state
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   const [syncLogsLoading, setSyncLogsLoading] = useState(false);
   const [syncPage, setSyncPage] = useState(0);
@@ -350,16 +353,17 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
   };
 
   const syncTotalPages = Math.max(1, Math.ceil(syncTotalCount / PAGE_SIZE));
+  const typeLabel = INTEGRATION_TYPES.find(t => t.value === integrationType)?.label || integrationType;
 
   if (loading) return <Card><CardContent className="p-6"><div className="h-32 bg-muted animate-pulse rounded-lg" /></CardContent></Card>;
 
-  const typeLabel = INTEGRATION_TYPES.find(t => t.value === integrationType)?.label || integrationType;
-
   return (
     <div className="space-y-6">
+      {/* Card 1: Configuração */}
       <Card>
         <CardHeader>
-          <CardTitle>Integração — {typeLabel}</CardTitle>
+          <CardTitle>Configuração — {typeLabel}</CardTitle>
+          <CardDescription>Configure as credenciais de acesso ao sistema do provedor</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -381,148 +385,189 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
 
           <div>
             <Label>URL da API</Label>
-            <Input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="https://api.provedor.com/webservice/v1" />
+            <Input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="https://seu-provedor.com.br/webservice/v1" />
+            <p className="text-xs text-muted-foreground mt-1">Apenas o domínio base da API do provedor, sem barras extras no final</p>
           </div>
 
           <div>
             <Label>Token da API</Label>
-            <Input value={apiToken} onChange={(e) => setApiToken(e.target.value)} placeholder="Token de autenticação" type="password" />
+            <div className="relative">
+              <Input
+                value={apiToken}
+                onChange={(e) => setApiToken(e.target.value)}
+                placeholder="Seu token de autenticação"
+                type={showToken ? 'text' : 'password'}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setShowToken(!showToken)}
+              >
+                {showToken ? <EyeOff size={16} /> : <Eye size={16} />}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Encontre o token no painel do provedor em Configurações &gt; API</p>
           </div>
 
-          {(integrationType === 'ixc') && (
+          {integrationType === 'ixc' && (
             <div>
               <Label>URL da API de Contratos (Opcional)</Label>
-              <Input value={apiUrlContracts} onChange={(e) => setApiUrlContracts(e.target.value)} placeholder="URL alternativa para contratos" />
+              <Input value={apiUrlContracts} onChange={(e) => setApiUrlContracts(e.target.value)} placeholder="URL alternativa para consultar contratos" />
+              <p className="text-xs text-muted-foreground mt-1">Use apenas se a API de contratos estiver em um endereço diferente</p>
             </div>
           )}
 
           <div className="flex flex-wrap gap-3 pt-2">
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Save size={16} className="mr-2" />}
-              Salvar
+              Salvar Configurações
             </Button>
             <Button onClick={handleTestConnection} variant="outline" disabled={testing || integrationType !== 'ixc'}>
               {testing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Wifi size={16} className="mr-2" />}
               Testar Conexão
             </Button>
           </div>
-
-          {/* Sync section - only for IXC */}
-          {integration && integrationType === 'ixc' && (
-            <div className="border-t border-border pt-4 mt-4 space-y-3">
-              <h4 className="text-sm font-semibold">Sincronização Manual</h4>
-
-              {syncProgress && (
-                <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">
-                      {syncProgress.status === 'running' && 'Sincronizando...'}
-                      {syncProgress.status === 'completed' && '✅ Concluído'}
-                      {syncProgress.status === 'cancelled' && '⏹ Cancelado'}
-                      {syncProgress.status === 'error' && '❌ Erro'}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {syncProgress.records_processed}/{syncProgress.total_records} registros
-                      {isSyncing && getETA() && ` • ETA: ${getETA()}`}
-                    </span>
-                  </div>
-                  <Progress value={progressPercent} className="h-2" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{progressPercent}%</span>
-                    {isSyncing && (
-                      <Button size="sm" variant="destructive" onClick={handleCancelSync} disabled={cancelling} className="h-7 text-xs">
-                        {cancelling ? <Loader2 size={12} className="mr-1 animate-spin" /> : <Square size={12} className="mr-1" />}
-                        Parar
-                      </Button>
-                    )}
-                  </div>
-                  {syncProgress.status === 'error' && syncProgress.error_message && (
-                    <div className="flex items-center gap-2 text-xs text-destructive mt-1">
-                      <AlertTriangle size={12} />
-                      {syncProgress.error_message}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-3">
-                <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync')}>
-                  {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
-                  Sincronizar Tudo
-                </Button>
-                <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync_boletos')}>
-                  {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
-                  Sincronizar Boletos
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Sync History */}
-      {syncTotalCount > 0 && (
+      {/* Card 2: Sincronização */}
+      {integration && integrationType === 'ixc' && (
         <Card>
-          <CardHeader><CardTitle className="text-lg">Histórico de Sincronizações</CardTitle></CardHeader>
-          <CardContent>
-            {syncLogsLoading ? (
-              <div className="h-24 bg-muted animate-pulse rounded-lg" />
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-left text-muted-foreground">
-                        <th className="pb-2 font-medium">Data</th>
-                        <th className="pb-2 font-medium">Tipo</th>
-                        <th className="pb-2 font-medium">Status</th>
-                        <th className="pb-2 font-medium text-right">Proc.</th>
-                        <th className="pb-2 font-medium text-right">Novos</th>
-                        <th className="pb-2 font-medium text-right">Atual.</th>
-                        <th className="pb-2 font-medium text-right">Duração</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {syncLogs.map((log) => {
-                        const st = statusConfig[log.status] || statusConfig.pending;
-                        return (
-                          <tr key={log.id} className="border-b border-border/50 last:border-0">
-                            <td className="py-2">{formatDate(log.created_at)}</td>
-                            <td className="py-2">{log.sync_type === 'full' ? 'Completa' : 'Boletos'}</td>
-                            <td className="py-2">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${st.className}`}>
-                                {st.icon}{st.label}
-                              </span>
-                            </td>
-                            <td className="py-2 text-right tabular-nums">{log.records_processed || 0}</td>
-                            <td className="py-2 text-right tabular-nums text-green-600">{log.records_created || 0}</td>
-                            <td className="py-2 text-right tabular-nums text-blue-600">{log.records_updated || 0}</td>
-                            <td className="py-2 text-right tabular-nums">{formatDuration(log.started_at, log.completed_at)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+          <CardHeader>
+            <CardTitle>Sincronização</CardTitle>
+            <CardDescription>Sincronize manualmente clientes e boletos do provedor. A sincronização automática ocorre a cada 10 minutos via cron.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Progress bar */}
+            {syncProgress && (
+              <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">
+                    {syncProgress.status === 'running' && 'Sincronizando...'}
+                    {syncProgress.status === 'completed' && '✅ Concluído'}
+                    {syncProgress.status === 'cancelled' && '⏹ Cancelado'}
+                    {syncProgress.status === 'error' && '❌ Erro'}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {syncProgress.records_processed}/{syncProgress.total_records} registros
+                    {isSyncing && getETA() && ` • ETA: ${getETA()}`}
+                  </span>
                 </div>
-                {syncTotalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-                    <span className="text-xs text-muted-foreground">
-                      {syncPage * PAGE_SIZE + 1}-{Math.min((syncPage + 1) * PAGE_SIZE, syncTotalCount)} / {syncTotalCount}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage === 0} onClick={() => setSyncPage(0)}><ChevronsLeft size={14} /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage === 0} onClick={() => setSyncPage(p => p - 1)}><ChevronLeft size={14} /></Button>
-                      <span className="text-xs text-muted-foreground px-2">{syncPage + 1}/{syncTotalPages}</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage >= syncTotalPages - 1} onClick={() => setSyncPage(p => p + 1)}><ChevronRight size={14} /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage >= syncTotalPages - 1} onClick={() => setSyncPage(syncTotalPages - 1)}><ChevronsRight size={14} /></Button>
-                    </div>
+                <Progress value={progressPercent} className="h-2" />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{progressPercent}%</span>
+                </div>
+                {syncProgress.status === 'error' && syncProgress.error_message && (
+                  <div className="flex items-center gap-2 text-xs text-destructive mt-1">
+                    <AlertTriangle size={12} />
+                    {syncProgress.error_message}
                   </div>
                 )}
-              </>
+              </div>
             )}
+
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync_clients')}>
+                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Users size={16} className="mr-2" />}
+                Sincronizar Clientes
+              </Button>
+              <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync_boletos')}>
+                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <FileText size={16} className="mr-2" />}
+                Sincronizar Boletos
+              </Button>
+              <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync')}>
+                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
+                Sincronizar Tudo
+              </Button>
+              <Button variant="outline" disabled={isSyncing} onClick={() => startSync('check_blocked')}>
+                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <ShieldAlert size={16} className="mr-2" />}
+                Diagnóstico Bloqueados
+              </Button>
+              {isSyncing && (
+                <Button variant="destructive" onClick={handleCancelSync} disabled={cancelling}>
+                  {cancelling ? <Loader2 size={16} className="mr-2 animate-spin" /> : <StopCircle size={16} className="mr-2" />}
+                  Parar Sincronização
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Card 3: Histórico */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">Histórico de Sincronizações</CardTitle>
+            <CardDescription>Registro das últimas sincronizações realizadas</CardDescription>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => loadSyncLogs()} className="h-8 w-8">
+            <RefreshCw size={16} />
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {syncLogsLoading ? (
+            <div className="h-24 bg-muted animate-pulse rounded-lg" />
+          ) : syncTotalCount === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Nenhuma sincronização realizada ainda.</p>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="pb-2 font-medium">Data</th>
+                      <th className="pb-2 font-medium">Tipo</th>
+                      <th className="pb-2 font-medium">Status</th>
+                      <th className="pb-2 font-medium text-right">Proc.</th>
+                      <th className="pb-2 font-medium text-right">Novos</th>
+                      <th className="pb-2 font-medium text-right">Atual.</th>
+                      <th className="pb-2 font-medium text-right">Duração</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {syncLogs.map((log) => {
+                      const st = statusConfig[log.status] || statusConfig.pending;
+                      return (
+                        <tr key={log.id} className="border-b border-border/50 last:border-0">
+                          <td className="py-2">{formatDate(log.created_at)}</td>
+                          <td className="py-2">{log.sync_type === 'full' ? 'Completa' : log.sync_type === 'boletos' ? 'Boletos' : log.sync_type}</td>
+                          <td className="py-2">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${st.className}`}>
+                              {st.icon}{st.label}
+                            </span>
+                          </td>
+                          <td className="py-2 text-right tabular-nums">{log.records_processed || 0}</td>
+                          <td className="py-2 text-right tabular-nums text-green-600">{log.records_created || 0}</td>
+                          <td className="py-2 text-right tabular-nums text-blue-600">{log.records_updated || 0}</td>
+                          <td className="py-2 text-right tabular-nums">{formatDuration(log.started_at, log.completed_at)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {syncTotalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+                  <span className="text-xs text-muted-foreground">
+                    {syncPage * PAGE_SIZE + 1}-{Math.min((syncPage + 1) * PAGE_SIZE, syncTotalCount)} / {syncTotalCount}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage === 0} onClick={() => setSyncPage(0)}><ChevronsLeft size={14} /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage === 0} onClick={() => setSyncPage(p => p - 1)}><ChevronLeft size={14} /></Button>
+                    <span className="text-xs text-muted-foreground px-2">{syncPage + 1}/{syncTotalPages}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage >= syncTotalPages - 1} onClick={() => setSyncPage(p => p + 1)}><ChevronRight size={14} /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={syncPage >= syncTotalPages - 1} onClick={() => setSyncPage(syncTotalPages - 1)}><ChevronsRight size={14} /></Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

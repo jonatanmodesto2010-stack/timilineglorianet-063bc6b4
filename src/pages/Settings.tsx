@@ -11,6 +11,7 @@ import { IconsManagement } from '@/components/settings/IconsManagement';
 import { HistorySettings } from '@/components/settings/HistorySettings';
 import { ColorThemeSettings } from '@/components/settings/ColorThemeSettings';
 import { CollectionRulesSettings } from '@/components/settings/CollectionRulesSettings';
+import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -67,6 +68,7 @@ const Settings = () => {
                   <TabsTrigger value="icons">Ícones</TabsTrigger>
                    
                    <TabsTrigger value="collection">Régua de Cobrança</TabsTrigger>
+                   <TabsTrigger value="integrations">Integrações</TabsTrigger>
                 </>
               )}
             <TabsTrigger value="history">Histórico</TabsTrigger>
@@ -98,6 +100,9 @@ const Settings = () => {
                 </TabsContent>
                 <TabsContent value="collection">
                   <CollectionRulesSettings />
+                </TabsContent>
+                <TabsContent value="integrations">
+                  <IntegrationsSettings />
                 </TabsContent>
               </>
             )}
