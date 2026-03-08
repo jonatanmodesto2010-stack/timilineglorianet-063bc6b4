@@ -103,7 +103,7 @@ const Dashboard = () => {
   }, [boletos, dateRange, filialFilter, filialTimelineIds]);
 
   const stats = useMemo(() => {
-    const grouped = groupTimelinesByClient(allTimelines);
+    const grouped = groupTimelinesByClient(filteredTimelines);
     const total = grouped.length;
     const active = grouped.filter(c => c.is_active && c.status === 'active').length;
     const blocked = grouped.filter(c => !c.is_active && c.status !== 'archived' && c.status !== 'completed').length;
