@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
 
       try {
         // === SYNC CLIENTS ===
-        if (action === 'sync' || action === 'cron' || action === 'sync_all') {
+        if (action === 'sync' || action === 'cron' || action === 'sync_all' || action === 'sync_clients' || action === 'check_blocked') {
           // Fetch clients with progress tracking
           const clients = await fetchAllIxcRecordsWithProgress(api_url, token, 'cliente', supabase, syncId);
 
