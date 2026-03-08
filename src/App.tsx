@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import VisualTimeline from "./pages/VisualTimeline";
 import NotFound from "./pages/NotFound";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
