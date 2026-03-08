@@ -388,6 +388,8 @@ Deno.serve(async (req) => {
             }
           }
 
+          console.log(`Status summary: ${blockedCount} blocked, ${toInsert.length} to insert, ${updateIds.length} to update`);
+
           // Batch insert
           if (toInsert.length > 0) {
             for (let i = 0; i < toInsert.length; i += 200) {
