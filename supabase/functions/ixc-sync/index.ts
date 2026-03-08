@@ -435,14 +435,17 @@ Deno.serve(async (req) => {
               // PRIORITY 2: Client inactive in IXC (ativo != 'S')
               isActive = false;
               status = 'archived';
+              archivedCount++;
             } else if (contract && !contract.active) {
               // PRIORITY 3: Client active but all contracts inactive
               isActive = false;
               status = 'archived';
+              archivedCount++;
             } else {
               // PRIORITY 4: Active client
               isActive = true;
               status = 'active';
+              activeCount++;
             }
 
             const existing = existingMap.get(clientIdStr);
