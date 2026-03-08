@@ -204,6 +204,8 @@ const AdminOrganizationDetail = () => {
           </CardContent>
         </Card>
 
+        <AdminOrgIntegrations organizationId={id!} />
+
         <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
           <DialogContent>
             <DialogHeader><DialogTitle>Adicionar Usuário</DialogTitle></DialogHeader>

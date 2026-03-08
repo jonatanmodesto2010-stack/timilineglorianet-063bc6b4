@@ -96,9 +96,6 @@ const Settings = () => {
                 <TabsContent value="icons">
                   <IconsManagement />
                 </TabsContent>
-                <TabsContent value="integrations">
-                  <IntegrationsSettings />
-                </TabsContent>
                 <TabsContent value="collection">
                   <CollectionRulesSettings />
                 </TabsContent>
