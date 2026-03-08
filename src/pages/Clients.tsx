@@ -283,8 +283,8 @@ const Clients = () => {
       <div className="flex flex-1 w-full">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto flex gap-6">
+        <main className="flex-1 p-4 overflow-hidden">
+          <div className="h-full flex flex-col lg:flex-row gap-4">
             {/* Left Column - Client List */}
             <div className="flex-1 min-w-0">
               <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
