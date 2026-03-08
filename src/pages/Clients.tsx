@@ -101,9 +101,17 @@ const Clients = () => {
         .select(CLIENT_COLUMNS, { count: 'exact' })
         .eq('organization_id', organizationId);
 
-      // Server-side filters
-      if (filialFilter !== 'all') {
-        query = query.eq('ixc_filial_id', filialFilter);
+      // Filter by filial client IDs (from IXC API)
+      if (filialClientIds !== null && filialClientIds.length > 0) {
+        query = query.in('client_id', filialClientIds);
+      } else if (filialClientIds !== null && filialClientIds.length === 0) {
+        // Filial selected but no clients found - return empty
+        setClients([]);
+        setTotalCount(0);
+        setOverdueDaysMap(new Map());
+        setOnlineClients(new Set());
+        setLoading(false);
+        return;
       }
 
       if (searchTerm) {
