@@ -537,47 +537,22 @@ export const ClientDashboardModal = ({
                               </span>
                             </TableCell>
                             <TableCell className="p-2">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={boleto.boleto_value}
-                                onChange={(e) => {
-                                  const updated = [...boletos];
-                                  updated[index].boleto_value = e.target.value;
-                                  setBoletos(updated);
-                                }}
-                                placeholder="0.00"
-                                className="h-8 bg-background text-sm"
-                              />
+                              <span className="text-sm text-foreground">
+                                {Number(boleto.boleto_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
                             </TableCell>
                             <TableCell className="p-2">
-                              <Select
-                                value={boleto.status}
-                                onValueChange={(value) => {
-                                  const updated = [...boletos];
-                                  updated[index].status = value;
-                                  setBoletos(updated);
-                                }}
-                              >
-                                <SelectTrigger className="h-8 bg-background text-sm">
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full shrink-0 ${
-                                      boleto.status === 'pago' ? 'bg-green-500' :
-                                      boleto.status === 'atrasado' ? 'bg-red-500' :
-                                      boleto.status === 'cancelado' ? 'bg-gray-500' :
-                                      'bg-yellow-500'
-                                    }`} />
-                                    <SelectValue />
-                                  </div>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pendente">Pendente</SelectItem>
-                                  <SelectItem value="pago">Pago</SelectItem>
-                                  <SelectItem value="atrasado">Atrasado</SelectItem>
-                                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                  boleto.status === 'pago' ? 'bg-green-500' :
+                                  boleto.status === 'atrasado' ? 'bg-red-500' :
+                                  boleto.status === 'cancelado' ? 'bg-gray-500' :
+                                  'bg-yellow-500'
+                                }`} />
+                                <span className="text-sm capitalize text-foreground">
+                                  {boleto.status || 'pendente'}
+                                </span>
+                              </div>
                             </TableCell>
                             <TableCell className="p-2 text-center">
                               {isPaidOrCancelled ? (
@@ -591,16 +566,9 @@ export const ClientDashboardModal = ({
                               )}
                             </TableCell>
                             <TableCell className="p-2">
-                              <Input
-                                value={boleto.description || ''}
-                                onChange={(e) => {
-                                  const updated = [...boletos];
-                                  updated[index].description = e.target.value;
-                                  setBoletos(updated);
-                                }}
-                                placeholder="Ex: Mensalidade"
-                                className="h-8 bg-background text-sm"
-                              />
+                              <span className="text-sm text-foreground">
+                                {boleto.description || '–'}
+                              </span>
                             </TableCell>
                             <TableCell className="p-2">
                               <Button
