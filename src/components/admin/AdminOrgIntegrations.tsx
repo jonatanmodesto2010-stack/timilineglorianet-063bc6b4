@@ -307,7 +307,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
         body: { action: 'test', api_url: apiUrl, api_token: apiToken },
       });
       if (error) throw error;
-      toast({ title: 'Conexão OK', description: `Conectado com sucesso. ${data?.total_clients || 0} clientes encontrados.` });
+      toast({ title: 'Conexão OK', description: `Conectado com sucesso. ${data?.active_clients || 0} clientes ativos de ${data?.total_clients || 0} total.` });
     } catch (err: any) {
       toast({ title: 'Falha na conexão', description: err.message, variant: 'destructive' });
     } finally {
