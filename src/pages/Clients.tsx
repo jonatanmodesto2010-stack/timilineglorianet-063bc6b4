@@ -79,21 +79,11 @@ const Clients = () => {
   const loadFiliais = async () => {
     if (!organizationId) return;
     try {
-      const { data } = await (supabaseClient as any)
-        .from('unique_client_timelines')
-        .select('ixc_filial_id, ixc_filial_name')
-        .eq('organization_id', organizationId)
-        .not('ixc_filial_id', 'is', null)
-        .not('ixc_filial_name', 'is', null);
-      
-      if (data) {
-        const map = new Map<string, string>();
-        for (const t of data) {
-          if (t.ixc_filial_id && t.ixc_filial_name) {
-            map.set(t.ixc_filial_id, t.ixc_filial_name);
-          }
-        }
-        setFiliais(Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1])));
+      const { data, error } = await supabase.functions.invoke('ixc-sync', {
+        body: { action: 'list_filiais', organization_id: organizationId },
+      });
+      if (!error && data?.filiais) {
+        setFiliais(data.filiais.sort((a: any, b: any) => a.name.localeCompare(b.name)));
       }
     } catch (err) {
       console.error('Error loading filiais:', err);
