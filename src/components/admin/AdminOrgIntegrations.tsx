@@ -98,6 +98,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
   const [testing, setTesting] = useState(false);
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [activeSyncAction, setActiveSyncAction] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastProgressTimeRef = useRef<number>(0);
   const { toast } = useToast();
@@ -211,7 +212,8 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
             .from('integration_sync_log')
             .update({ status: 'error', error_message: 'Travamento detectado (120s sem progresso)', completed_at: new Date().toISOString() })
             .eq('id', syncId);
-          setSyncProgress(null);
+           setSyncProgress(null);
+          setActiveSyncAction(null);
           stopPolling();
           toast({ title: 'Sincronização travada', description: 'Interrompida após 120s sem progresso.', variant: 'destructive' });
           return;
@@ -230,7 +232,8 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
           toast({ title: 'Erro na sincronização', description: data.error_message || 'Erro desconhecido', variant: 'destructive' });
         }
         setTimeout(() => {
-          setSyncProgress(null);
+           setSyncProgress(null);
+          setActiveSyncAction(null);
           loadSyncLogs();
         }, 3000);
       }
@@ -314,6 +317,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
 
   const startSync = async (syncAction: string) => {
     if (syncProgress?.status === 'running') return;
+    setActiveSyncAction(syncAction);
     try {
       supabase.functions.invoke('ixc-sync', {
         body: { action: syncAction, organization_id: organizationId },
@@ -333,6 +337,7 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
         }
       }, 1500);
     } catch (err: any) {
+      setActiveSyncAction(null);
       toast({ title: 'Erro ao iniciar sincronização', description: err.message, variant: 'destructive' });
     }
   };
@@ -471,19 +476,19 @@ export const AdminOrgIntegrations = ({ organizationId }: AdminOrgIntegrationsPro
 
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync_clients')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Users size={16} className="mr-2" />}
+                {activeSyncAction === 'sync_clients' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Users size={16} className="mr-2" />}
                 Sincronizar Clientes
               </Button>
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync_boletos')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <FileText size={16} className="mr-2" />}
+                {activeSyncAction === 'sync_boletos' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <FileText size={16} className="mr-2" />}
                 Sincronizar Boletos
               </Button>
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('sync')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
+                {activeSyncAction === 'sync' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <RefreshCw size={16} className="mr-2" />}
                 Sincronizar Tudo
               </Button>
               <Button variant="outline" disabled={isSyncing} onClick={() => startSync('check_blocked')}>
-                {isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <ShieldAlert size={16} className="mr-2" />}
+                {activeSyncAction === 'check_blocked' && isSyncing ? <Loader2 size={16} className="mr-2 animate-spin" /> : <ShieldAlert size={16} className="mr-2" />}
                 Diagnóstico Bloqueados
               </Button>
               {isSyncing && (
