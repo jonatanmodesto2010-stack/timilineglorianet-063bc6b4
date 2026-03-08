@@ -336,6 +336,8 @@ Deno.serve(async (req) => {
           const updateFilialIds: string[] = [];
           const updateFilialNames: string[] = [];
 
+          let blockedCount = 0;
+
           for (const client of clients) {
             const clientIdStr = String(client.id);
             const clientName = client.razao || client.fantasia || `Cliente ${client.id}`;
