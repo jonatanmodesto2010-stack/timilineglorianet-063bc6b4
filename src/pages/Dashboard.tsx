@@ -166,7 +166,7 @@ const Dashboard = () => {
       delinquencyRate, avgOverdueDays, blockRate,
       aging, agingCount,
     };
-  }, [allTimelines, filteredBoletos]);
+  }, [filteredTimelines, filteredBoletos]);
 
   const agingChartData = [
     { name: '1-30d', value: stats.aging['1-30'], count: stats.agingCount['1-30'], fill: 'hsl(48 96% 53%)' },
