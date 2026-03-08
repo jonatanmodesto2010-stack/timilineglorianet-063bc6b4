@@ -129,9 +129,13 @@ const Clients = () => {
     return sortClients(grouped, overdueDaysMap);
   }, [allTimelines, overdueDaysMap]);
 
-  // Apply search/status filters
+  // Apply search/status/filial filters
   const filteredClients = useMemo(() => {
     let results = groupedClients;
+
+    if (filialFilter !== 'all') {
+      results = results.filter(c => c.primaryTimeline.ixc_filial_id === filialFilter);
+    }
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
