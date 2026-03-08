@@ -12,39 +12,25 @@ function encodeIxcToken(rawToken: string): string {
   return btoa(`${rawToken}:`);
 }
 
-async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string, body: Record<string, any> = {}) {
-  const url = `${apiUrl.replace(/\/$/, '')}/${endpoint}`;
-  const defaultBody: Record<string, any> = {
-    qtype: 'id',
-    query: '0',
-    oper: '>',
-    page: '1',
-    rp: '500',
-    sortname: 'id',
-    sortorder: 'asc',
-    ...body,
-  };
-
+async function ixcGetClient(apiUrl: string, encodedToken: string, clientId: string): Promise<any> {
+  // GET individual client record: /cliente/{id}
+  const url = `${apiUrl.replace(/\/$/, '')}/cliente/${clientId}`;
+  
   const res = await fetch(url, {
-    method: 'POST',
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Basic ${encodedToken}`,
       'ixcsoft': 'listar',
     },
-    body: JSON.stringify(defaultBody),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`IXC API error ${res.status}: ${text.substring(0, 300)}`);
+    throw new Error(`IXC API error ${res.status}: ${text.substring(0, 200)}`);
   }
 
-  const data = await res.json();
-  return {
-    registros: data.registros || [],
-    total: parseInt(data.total || '0', 10),
-  };
+  return await res.json();
 }
 
 Deno.serve(async (req) => {
@@ -61,11 +47,17 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { organization_id, client_ids } = body;
-    console.log(`org: ${organization_id}, clients: ${JSON.stringify(client_ids)}`);
+    console.log(`org: ${organization_id}, clients count: ${client_ids?.length || 0}`);
 
     if (!organization_id) {
       return new Response(JSON.stringify({ error: 'organization_id é obrigatório', online_clients: [] }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!client_ids || !Array.isArray(client_ids) || client_ids.length === 0) {
+      return new Response(JSON.stringify({ online_clients: [], total_online: 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -92,185 +84,69 @@ Deno.serve(async (req) => {
     }
 
     const encodedToken = encodeIxcToken(api_token);
-    const onlineClientIds = new Set<string>();
+    const onlineClientIds: string[] = [];
 
-    // Try multiple radius/connection endpoints to find online status
-    const endpointsToTry = [
-      'radius_online',
-      'radacct', 
-      'v_radacct',
-      'radpop_pppoe',
-      'v_radius_online',
-    ];
-
-    let foundEndpoint = false;
-
-    for (const endpoint of endpointsToTry) {
-      if (foundEndpoint) break;
+    // Query each client individually via GET /cliente/{id}
+    // Process in batches of 10 for concurrency
+    const batchSize = 10;
+    for (let i = 0; i < client_ids.length; i += batchSize) {
+      const batch = client_ids.slice(i, i + batchSize);
       
-      try {
-        console.log(`Trying endpoint: ${endpoint}`);
-        const { registros, total } = await ixcRequest(api_url, encodedToken, endpoint, {
-          page: '1',
-          rp: '5',
-        });
-        
-        console.log(`${endpoint}: ${registros.length} records (total: ${total})`);
-        
-        if (registros.length > 0) {
-          const keys = Object.keys(registros[0]);
-          console.log(`${endpoint} KEYS: ${keys.join(',')}`);
-          
-          // Check if this is actually a radius/connection table (not financial)
-          const hasRadiusFields = keys.some(k => 
-            k.includes('login') || k.includes('mac') || k.includes('framedip') || 
-            k.includes('nas') || k.includes('acct') || k.includes('calledstation') ||
-            k.includes('acctstarttime') || k.includes('acctstoptime')
-          );
-          
-          if (!hasRadiusFields) {
-            console.log(`${endpoint}: Not a radius table, skipping`);
-            continue;
-          }
-          
-          foundEndpoint = true;
-          console.log(`Found radius endpoint: ${endpoint}`);
-          
-          // Log sample record
-          const sample = registros[0];
-          const relevantKeys = keys.filter(k => 
-            k.includes('cliente') || k.includes('login') || k.includes('online') || 
-            k.includes('ativo') || k.includes('status') || k.includes('stop') ||
-            k.includes('start') || k === 'id'
-          );
-          const sampleData: Record<string, any> = {};
-          for (const k of relevantKeys) sampleData[k] = sample[k];
-          console.log(`Sample: ${JSON.stringify(sampleData)}`);
-          
-          // Determine how to identify online users
-          // For radacct: online = acctstoptime is empty/null
-          // For radius_online: all records are online
-          const isRadiusOnline = endpoint.includes('online');
-          
-          if (isRadiusOnline) {
-            // All records in radius_online are online connections
-            // Need to paginate through all to find matching client_ids
-            let page = 1;
-            const perPage = 500;
-            while (true) {
-              const { registros: recs } = await ixcRequest(api_url, encodedToken, endpoint, {
-                page: String(page),
-                rp: String(perPage),
-              });
-              
-              for (const r of recs) {
-                const clientId = String(r.id_cliente || r.cliente_id || '');
-                if (clientId) onlineClientIds.add(clientId);
-              }
-              
-              if (recs.length < perPage) break;
-              page++;
-            }
-          } else {
-            // For radacct: check each client individually
-            // Active connection = acctstoptime is empty
-            if (client_ids && Array.isArray(client_ids)) {
-              for (const clientId of client_ids) {
-                try {
-                  // Find the login for this client first
-                  const { registros: loginRecs } = await ixcRequest(api_url, encodedToken, endpoint, {
-                    qtype: 'id_cliente',
-                    query: String(clientId),
-                    oper: '=',
-                    page: '1',
-                    rp: '5',
-                    sortname: 'id',
-                    sortorder: 'desc', // most recent first
-                  });
-                  
-                  for (const r of loginRecs) {
-                    // If acctstoptime is empty, connection is still active
-                    const stopTime = r.acctstoptime || r.acct_stop_time || r.data_final || '';
-                    if (!stopTime || stopTime === '0000-00-00 00:00:00' || stopTime === '') {
-                      onlineClientIds.add(String(clientId));
-                      console.log(`Client ${clientId}: ONLINE (active connection found)`);
-                      break;
-                    }
-                  }
-                } catch (err: any) {
-                  console.error(`Error checking ${endpoint} for client ${clientId}: ${err.message}`);
+      const results = await Promise.allSettled(
+        batch.map(async (clientId: string) => {
+          try {
+            const clientData = await ixcGetClient(api_url, encodedToken, clientId);
+            
+            // Log first client's full keys to understand structure
+            if (i === 0 && batch.indexOf(clientId) === 0) {
+              const keys = Object.keys(clientData);
+              console.log(`Client ${clientId} KEYS: ${keys.join(',')}`);
+              // Log status-related fields
+              const statusFields: Record<string, any> = {};
+              for (const k of keys) {
+                if (k.includes('online') || k.includes('status') || k.includes('ativo') || 
+                    k.includes('bloqueado') || k.includes('acesso') || k.includes('conexao') ||
+                    k.includes('ativo') || k === 'id') {
+                  statusFields[k] = clientData[k];
                 }
               }
+              console.log(`Client ${clientId} status fields: ${JSON.stringify(statusFields)}`);
             }
+
+            // Check online status - IXC uses various field names
+            const online = clientData.online || clientData.status_online || clientData.conexao_online || '';
+            const statusAcesso = clientData.status_acesso || clientData.acesso || '';
+            
+            const isOnline = 
+              online === 'S' || online === 's' || online === '1' || online === 1 || online === true ||
+              statusAcesso === 'online' || statusAcesso === 'Online' || statusAcesso === 'ONLINE';
+
+            if (isOnline) {
+              console.log(`Client ${clientId}: ONLINE`);
+              return clientId;
+            } else {
+              console.log(`Client ${clientId}: OFFLINE (online=${online}, status_acesso=${statusAcesso})`);
+              return null;
+            }
+          } catch (err: any) {
+            console.error(`Error checking client ${clientId}: ${err.message}`);
+            return null;
           }
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          onlineClientIds.push(result.value);
         }
-      } catch (err: any) {
-        console.log(`${endpoint} failed: ${err.message.substring(0, 100)}`);
       }
     }
 
-    // If no radius endpoint worked, try checking via login endpoint
-    if (!foundEndpoint) {
-      console.log('No radius endpoint found, trying login endpoint...');
-      try {
-        const { registros, total } = await ixcRequest(api_url, encodedToken, 'login', {
-          page: '1', rp: '5',
-        });
-        console.log(`login: ${registros.length} records (total: ${total})`);
-        if (registros.length > 0) {
-          console.log(`login KEYS: ${Object.keys(registros[0]).join(',')}`);
-          const sample: Record<string, any> = {};
-          for (const k of Object.keys(registros[0])) {
-            if (k.includes('online') || k.includes('cliente') || k.includes('ativo') || k.includes('status') || k === 'id') {
-              sample[k] = registros[0][k];
-            }
-          }
-          console.log(`login sample: ${JSON.stringify(sample)}`);
-          
-          // Check if login has an online field
-          if (client_ids && Array.isArray(client_ids)) {
-            for (const clientId of client_ids) {
-              try {
-                const { registros: loginRecs } = await ixcRequest(api_url, encodedToken, 'login', {
-                  qtype: 'id_cliente',
-                  query: String(clientId),
-                  oper: '=',
-                  page: '1',
-                  rp: '10',
-                });
-                
-                for (const r of loginRecs) {
-                  const online = r.online || r.ativo || '';
-                  if (online === 'S' || online === 's' || online === '1' || online === 1 || online === true) {
-                    onlineClientIds.add(String(clientId));
-                    console.log(`Client ${clientId}: ONLINE via login`);
-                    break;
-                  }
-                }
-              } catch (err: any) {
-                console.error(`Error checking login for client ${clientId}: ${err.message}`);
-              }
-            }
-          }
-        }
-      } catch (err: any) {
-        console.log(`login endpoint failed: ${err.message.substring(0, 100)}`);
-      }
-    }
-
-    const result = [...onlineClientIds];
-    // Filter to requested client_ids if provided
-    let filtered = result;
-    if (client_ids && Array.isArray(client_ids) && client_ids.length > 0) {
-      const filterSet = new Set(client_ids.map(String));
-      filtered = result.filter(id => filterSet.has(id));
-    }
-
-    console.log(`Final: ${filtered.length} online out of ${client_ids?.length || 0} requested`);
+    console.log(`Final: ${onlineClientIds.length} online out of ${client_ids.length} requested`);
 
     return new Response(JSON.stringify({ 
-      online_clients: filtered,
-      total_online: onlineClientIds.size,
+      online_clients: onlineClientIds,
+      total_online: onlineClientIds.length,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
