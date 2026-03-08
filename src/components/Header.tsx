@@ -69,14 +69,6 @@ export const Header = () => {
     >
       <div className="flex items-center gap-4">
         <SidebarTrigger className="-ml-2" />
-        <motion.div 
-          className="flex items-center"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <img src={logo} alt={APP_NAME} className="h-8 object-contain" />
-        </motion.div>
       </div>
 
       <div className="flex items-center gap-3">
