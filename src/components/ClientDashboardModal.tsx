@@ -466,7 +466,7 @@ export const ClientDashboardModal = ({
                   <Switch
                     id="is_active"
                     checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                    disabled
                   />
                 </div>
               </div>
