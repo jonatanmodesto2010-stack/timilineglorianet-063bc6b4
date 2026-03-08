@@ -1,114 +1,29 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState, useMemo, memo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Search, BarChart3, Grid3x3, CalendarDays, Clock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { supabaseClient } from '@/lib/supabase-client';
-import { useToast } from '@/hooks/use-toast';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Search, Clock, Grid3x3, CalendarDays } from 'lucide-react';
+import { useCalendarEvents, type CalendarEvent } from '@/hooks/useCalendarEvents';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-
-interface Event {
-  id: string;
-  client_name: string;
-  event_date: string;
-  event_time?: string;
-  description: string | null;
-  status: string;
-  icon: string;
-}
 
 interface CalendarPanelProps {
   organizationId: string | null;
   onClientClick?: (clientName: string) => void;
 }
 
-export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelProps) => {
-  const [events, setEvents] = useState<Event[]>([]);
+export const CalendarPanel = memo(({ organizationId, onClientClick }: CalendarPanelProps) => {
+  const { events, loading } = useCalendarEvents(organizationId);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [clientSearch, setClientSearch] = useState<string>('');
   const [iconsFilter, setIconsFilter] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'today' | 'month' | 'week'>('week');
-  const [refreshKey, setRefreshKey] = useState(0);
-  const initialLoadDone = useRef(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (organizationId) loadEvents();
-  }, [organizationId]);
-
-  // Realtime
-  useEffect(() => {
-    if (!organizationId) return;
-    const channel = supabase
-      .channel('calendar-panel-events')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'timeline_events' }, () => loadEvents())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_timelines' }, () => loadEvents())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [organizationId]);
-
-  const loadEvents = async () => {
-    if (!organizationId) return;
-    if (!initialLoadDone.current) setLoading(true);
-
-    try {
-      const { data: timelines } = await supabaseClient
-        .from('client_timelines')
-        .select('id, client_name')
-        .eq('organization_id', organizationId);
-
-      if (!timelines || timelines.length === 0) { setEvents([]); return; }
-
-      const timelineIds = timelines.map(t => t.id);
-      const { data: lines } = await supabaseClient
-        .from('timeline_lines')
-        .select('id, timeline_id')
-        .in('timeline_id', timelineIds);
-
-      if (!lines || lines.length === 0) { setEvents([]); return; }
-
-      const lineIds = lines.map(l => l.id);
-      const { data: eventsData } = await supabaseClient
-        .from('timeline_events')
-        .select('*')
-        .in('line_id', lineIds);
-
-      const mapped = (eventsData || []).map(event => {
-        const line = lines.find(l => l.id === event.line_id);
-        const timeline = timelines.find(t => t.id === line?.timeline_id);
-        return {
-          id: event.id,
-          client_name: timeline?.client_name || 'Cliente',
-          event_date: event.event_date,
-          event_time: event.event_time,
-          description: event.description,
-          status: event.status,
-          icon: event.icon,
-        };
-      });
-
-      setEvents(mapped);
-      setRefreshKey(prev => prev + 1);
-      initialLoadDone.current = true;
-    } catch (err: any) {
-      console.error('CalendarPanel load error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const today = new Date();
   const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -141,19 +56,21 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
       const matchesIcon = iconsFilter.length === 0 || iconsFilter.includes(event.icon);
       return matchesStatus && matchesClient && matchesIcon;
     });
-  }, [events, statusFilter, clientSearch, iconsFilter, refreshKey]);
+  }, [events, statusFilter, clientSearch, iconsFilter]);
 
-  const getEventsForDay = (day: number, month?: number) => {
-    const targetMonth = month !== undefined ? month : currentDate.getMonth() + 1;
-    const dateStr = `${String(day).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}`;
-    return filteredEvents.filter(event => event.event_date === dateStr);
-  };
-
-  const getEventsForDate = (date: Date) => {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return filteredEvents.filter(e => e.event_date === `${day}/${month}`);
-  };
+  const getEventsForDay = useMemo(() => {
+    const eventsByDate = new Map<string, CalendarEvent[]>();
+    for (const event of filteredEvents) {
+      const existing = eventsByDate.get(event.event_date) || [];
+      existing.push(event);
+      eventsByDate.set(event.event_date, existing);
+    }
+    return (day: number, month?: number) => {
+      const targetMonth = month !== undefined ? month : currentDate.getMonth() + 1;
+      const dateStr = `${String(day).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}`;
+      return eventsByDate.get(dateStr) || [];
+    };
+  }, [filteredEvents, currentDate]);
 
   const monthlyStats = useMemo(() => {
     const stats = { total: filteredEvents.length, created: 0, resolved: 0, no_response: 0 };
@@ -165,11 +82,13 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
     return stats;
   }, [filteredEvents]);
 
-  const hasNoResponseStatus = (clientName: string) => {
-    return events.some(event => event.client_name === clientName && event.status === 'no_response');
-  };
+  const hasNoResponseStatus = useMemo(() => {
+    const clientSet = new Set<string>();
+    events.forEach(e => { if (e.status === 'no_response') clientSet.add(e.client_name); });
+    return (clientName: string) => clientSet.has(clientName);
+  }, [events]);
 
-  const getStatusCounts = (dayEvents: Event[]) => {
+  const getStatusCounts = (dayEvents: CalendarEvent[]) => {
     const counts = { created: 0, resolved: 0, no_response: 0 };
     dayEvents.forEach(event => {
       if (event.status === 'created') counts.created++;
@@ -207,10 +126,9 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
       <h2 className="text-xl font-bold text-foreground mb-3">Calendário de Eventos</h2>
 
-      {/* Stats Row - Compact */}
+      {/* Stats Row */}
       <div className="grid grid-cols-4 gap-2 mb-3">
         <div className="bg-card border border-border rounded-lg p-2 text-center">
           <div className="text-xs text-muted-foreground">Total</div>
@@ -230,7 +148,7 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
         </div>
       </div>
 
-      {/* Filters - Compact */}
+      {/* Filters */}
       <div className="bg-card border border-border rounded-xl p-3 mb-3">
         <div className="flex gap-2 mb-2">
           <div className="flex-1 relative">
@@ -254,7 +172,6 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
             </SelectContent>
           </Select>
         </div>
-        {/* Icon filters */}
         <div className="flex flex-wrap gap-1.5">
           {['💬', '📅', '📄', '📞', '✅', '🤝', '⚠️', '🧰'].map(icon => (
             <button
@@ -273,7 +190,6 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
 
       {/* Calendar Area */}
       <div className="flex-1 bg-card border border-border rounded-xl p-4 overflow-auto">
-        {/* View Mode Buttons */}
         <div className="flex items-center justify-center gap-2 mb-4">
           <Button variant={viewMode === 'today' ? 'default' : 'outline'} onClick={() => setViewMode('today')} size="sm" className="gap-1.5">
             <Clock size={14} /> Hoje
@@ -286,7 +202,6 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
           </Button>
         </div>
 
-        {/* Navigation */}
         {viewMode !== 'today' && (
           <div className="flex items-center justify-between mb-4">
             <button onClick={viewMode === 'month' ? previousMonth : previousWeek} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
@@ -331,12 +246,9 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
                 );
               }
 
-              return todayEvents.map((event, idx) => (
-                <motion.div
+              return todayEvents.map((event) => (
+                <div
                   key={event.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
                   onClick={() => handleEventClick(event.client_name)}
                   className="p-4 border-l-4 rounded-lg cursor-pointer transition-all hover:shadow-md bg-card border-border"
                   style={{
@@ -362,7 +274,7 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
                       {event.status === 'no_response' && '🚫'}
                     </Badge>
                   </div>
-                </motion.div>
+                </div>
               ));
             })()}
           </div>
@@ -536,4 +448,6 @@ export const CalendarPanel = ({ organizationId, onClientClick }: CalendarPanelPr
       </Dialog>
     </div>
   );
-};
+});
+
+CalendarPanel.displayName = 'CalendarPanel';
