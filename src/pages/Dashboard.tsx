@@ -167,10 +167,13 @@ const Dashboard = () => {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto space-y-6">
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-              <h2 className="text-2xl font-bold text-foreground">Dashboard de Cobrança</h2>
-              <p className="text-muted-foreground">Visão geral financeira e métricas de cobrança</p>
-            </motion.div>
+            <div className="flex items-center justify-between">
+              <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <h2 className="text-2xl font-bold text-foreground">Dashboard de Cobrança</h2>
+                <p className="text-muted-foreground">Visão geral financeira e métricas de cobrança</p>
+              </motion.div>
+              {!loading && <DelinquentsExport timelines={allTimelines} boletos={boletos} />}
+            </div>
 
             {loading ? (
               <div className="space-y-6">
