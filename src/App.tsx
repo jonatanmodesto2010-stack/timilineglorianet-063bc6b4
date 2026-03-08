@@ -15,6 +15,9 @@ import Profile from "./pages/Profile";
 import VisualTimeline from "./pages/VisualTimeline";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +36,9 @@ const AppContent = () => {
         <Route path="/visual-timeline" element={<VisualTimeline />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/organizations" element={<AdminOrganizations />} />
+        <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -10,7 +10,7 @@ import { authSchema } from '@/lib/validations';
 import { z } from 'zod';
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [email, setEmail] = useState('');
@@ -29,7 +29,7 @@ const Auth = () => {
     if (resetParam === 'true') {
       setIsResetMode(true);
       setIsForgotPassword(false);
-      setIsLogin(false);
+      // isLogin is always true now (no public signup)
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -68,7 +68,7 @@ const Auth = () => {
       });
       
       setIsForgotPassword(false);
-      setIsLogin(true);
+      // back to login view
       setEmail('');
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -182,7 +182,7 @@ const Auth = () => {
           title: 'Cadastro realizado!',
           description: 'Você já pode fazer login.',
         });
-        setIsLogin(true);
+        // signup disabled
       }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -301,7 +301,6 @@ const Auth = () => {
                   type="button"
                   onClick={() => {
                     setIsForgotPassword(false);
-                    setIsLogin(true);
                     setErrors({});
                   }}
                   className="text-sm text-primary hover:underline"
@@ -377,7 +376,6 @@ const Auth = () => {
                     type="button"
                     onClick={() => {
                       setIsForgotPassword(true);
-                      setIsLogin(false);
                       setErrors({});
                     }}
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -389,20 +387,7 @@ const Auth = () => {
             </form>
           )}
 
-          {!isResetMode && !isForgotPassword && (
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
-                className="text-sm text-primary hover:underline"
-              >
-                {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Entre'}
-              </button>
-            </div>
-          )}
+          {/* Signup público desabilitado - criação apenas por admin */}
         </div>
       </motion.div>
     </div>

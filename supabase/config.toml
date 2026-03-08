@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.process-collection-rules]
 verify_jwt = false
+
+[functions.admin-create-organization]
+verify_jwt = false
