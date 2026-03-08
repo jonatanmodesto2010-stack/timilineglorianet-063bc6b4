@@ -403,7 +403,7 @@ const Dashboard = () => {
 
                 <CollectionActionsWidget />
                 <AgreementsOverdueWidget />
-                <ClientPriorityList timelines={allTimelines} boletos={boletos} />
+                <ClientPriorityList timelines={filteredTimelines} boletos={filteredBoletos} />
               </>
             )}
           </div>
