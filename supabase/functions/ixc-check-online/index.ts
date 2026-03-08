@@ -6,24 +6,24 @@ const corsHeaders = {
 };
 
 function encodeIxcToken(rawToken: string): string {
-  if (rawToken.includes(':')) {
-    return btoa(rawToken);
-  }
+  if (rawToken.includes(':')) return btoa(rawToken);
   return btoa(`${rawToken}:`);
 }
 
-async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string, params: Record<string, any> = {}) {
+async function ixcPost(apiUrl: string, encodedToken: string, endpoint: string, params: Record<string, any> = {}) {
   const url = `${apiUrl.replace(/\/$/, '')}/${endpoint}`;
   const body = {
-    qtype: 'radusuarios.id',
+    qtype: 'id_cliente',
     query: '0',
     oper: '>',
     page: '1',
     rp: '500',
-    sortname: 'radusuarios.id',
+    sortname: 'id',
     sortorder: 'asc',
     ...params,
   };
+
+  console.log(`IXC request: ${endpoint}, qtype=${body.qtype}, query=${body.query}, oper=${body.oper}`);
 
   const res = await fetch(url, {
     method: 'POST',
@@ -35,14 +35,16 @@ async function ixcRequest(apiUrl: string, encodedToken: string, endpoint: string
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`IXC API error ${res.status}: ${text.substring(0, 300)}`);
+  const text = await res.text();
+  
+  if (!res.ok || text.startsWith('<')) {
+    console.error(`IXC error ${res.status} for ${endpoint}: ${text.substring(0, 200)}`);
+    throw new Error(`IXC API error ${res.status}`);
   }
 
-  const data = await res.json();
+  const data = JSON.parse(text);
   return {
-    registros: data.registros || [],
+    registros: Array.isArray(data.registros) ? data.registros : [],
     total: parseInt(data.total || '0', 10),
   };
 }
@@ -69,8 +71,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get IXC integration
-    const { data: integration, error: intError } = await supabase
+    const { data: integration } = await supabase
       .from('organization_integrations')
       .select('*')
       .eq('organization_id', organization_id)
@@ -78,77 +79,89 @@ Deno.serve(async (req) => {
       .eq('is_active', true)
       .single();
 
-    if (intError || !integration?.api_url || !integration?.api_token) {
+    if (!integration?.api_url || !integration?.api_token) {
       return new Response(JSON.stringify({ error: 'Integração IXC não encontrada', online_clients: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const encodedToken = encodeIxcToken(integration.api_token);
-    const onlineClientIds: string[] = [];
+    const requestedIds = new Set(client_ids.map(String));
+    const onlineClientIds = new Set<string>();
 
-    // Query radusuarios for each client_id, checking the 'online' field
-    // Process in batches of 10 for concurrency
-    const batchSize = 10;
-    for (let i = 0; i < client_ids.length; i += batchSize) {
-      const batch = client_ids.slice(i, i + batchSize);
+    // Strategy: paginate through ALL radusuarios records and check 'online' field
+    // This avoids per-client queries and handles the IXC API format correctly
+    let page = 1;
+    const perPage = 500;
+    let totalRecords = 0;
+    let loggedSample = false;
 
-      const results = await Promise.allSettled(
-        batch.map(async (clientId: string) => {
-          try {
-            const { registros } = await ixcRequest(integration.api_url!, encodedToken, 'radusuarios', {
-              qtype: 'radusuarios.id_cliente',
-              query: String(clientId),
-              oper: '=',
-              page: '1',
-              rp: '50',
-              sortname: 'radusuarios.id',
-              sortorder: 'desc',
-            });
+    while (true) {
+      try {
+        const { registros, total } = await ixcPost(integration.api_url, encodedToken, 'radusuarios', {
+          qtype: 'id',
+          query: '0',
+          oper: '>',
+          page: String(page),
+          rp: String(perPage),
+          sortname: 'id',
+          sortorder: 'asc',
+        });
 
-            // Log first client's fields for debugging
-            if (i === 0 && batch.indexOf(clientId) === 0 && registros.length > 0) {
-              const sample = registros[0];
-              console.log(`Sample radusuarios keys: ${Object.keys(sample).join(',')}`);
-              console.log(`Sample: online=${sample.online}, ativo=${sample.ativo}, id_cliente=${sample.id_cliente}`);
-            }
-
-            // Check if any radusuarios record for this client has online = 'S'
-            for (const r of registros) {
-              const online = String(r.online || '').toUpperCase();
-              // 'S' = Sim (online), 'SS' can be a default/insert value
-              // Active connection: online field is 'S'
-              if (online === 'S') {
-                console.log(`Client ${clientId}: ONLINE (online=${r.online})`);
-                return clientId;
-              }
-            }
-
-            if (registros.length > 0) {
-              console.log(`Client ${clientId}: OFFLINE (online=${registros[0].online})`);
-            } else {
-              console.log(`Client ${clientId}: NO radusuarios record`);
-            }
-            return null;
-          } catch (err: any) {
-            console.error(`Error checking client ${clientId}: ${err.message}`);
-            return null;
-          }
-        })
-      );
-
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value) {
-          onlineClientIds.push(result.value);
+        if (page === 1) {
+          totalRecords = total;
+          console.log(`radusuarios total: ${total}`);
         }
+
+        if (!registros.length) break;
+
+        // Log sample record to understand structure
+        if (!loggedSample && registros.length > 0) {
+          loggedSample = true;
+          const sample = registros[0];
+          const keys = Object.keys(sample);
+          console.log(`radusuarios KEYS: ${keys.join(',')}`);
+          // Log relevant fields
+          const relevant: Record<string, any> = {};
+          for (const k of keys) {
+            if (k.includes('online') || k.includes('cliente') || k.includes('ativo') || 
+                k.includes('status') || k === 'id' || k === 'login') {
+              relevant[k] = sample[k];
+            }
+          }
+          console.log(`Sample record: ${JSON.stringify(relevant)}`);
+        }
+
+        for (const r of registros) {
+          const clientId = String(r.id_cliente || '');
+          if (!clientId || !requestedIds.has(clientId)) continue;
+
+          const online = String(r.online || '').toUpperCase();
+          if (online === 'S') {
+            onlineClientIds.add(clientId);
+          }
+        }
+
+        if (registros.length < perPage) break;
+        page++;
+        
+        // Safety limit
+        if (page > 200) {
+          console.log('Safety limit reached at page 200');
+          break;
+        }
+      } catch (err: any) {
+        console.error(`Error on page ${page}: ${err.message}`);
+        break;
       }
     }
 
-    console.log(`Final: ${onlineClientIds.length} online out of ${client_ids.length} requested`);
+    const result = [...onlineClientIds];
+    console.log(`Final: ${result.length} online out of ${client_ids.length} requested (scanned ${totalRecords} radusuarios)`);
 
     return new Response(JSON.stringify({
-      online_clients: onlineClientIds,
-      total_online: onlineClientIds.length,
+      online_clients: result,
+      total_online: result.length,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
