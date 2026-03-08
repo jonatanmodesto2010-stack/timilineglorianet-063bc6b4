@@ -476,7 +476,7 @@ const Manual = () => {
             )}
 
             {/* SUPER ADMIN */}
-            {isSuperAdmin && (
+            {isVisible('superadmin') && (
               <AccordionItem value="superadmin" className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-2">
@@ -516,7 +516,7 @@ const Manual = () => {
             )}
 
             {/* DICAS E BOAS PRÁTICAS */}
-            <AccordionItem value="dicas" className="border rounded-lg px-4">
+            {isVisible('dicas') && <AccordionItem value="dicas" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-primary" />
