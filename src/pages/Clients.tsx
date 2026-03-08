@@ -300,13 +300,8 @@ const Clients = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
-      <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      
-      <div className="flex flex-1 w-full">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        
-        <main className="flex-1 p-6 overflow-auto">
+    <AppLayout>
+      <div className="p-6">
           <div className="max-w-7xl mx-auto flex gap-6">
             {/* Left Column - Client List */}
             <div className="flex-1 min-w-0">
