@@ -49,15 +49,8 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
-      <div className="flex-1 flex flex-col">
-        <Header 
-          onToggleSidebar={() => setIsSidebarOpen(true)}
-        />
-        
-        <main className="container mx-auto px-4 py-8 flex-1">
+    <AppLayout>
+      <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-8">Configurações</h1>
         
         <Tabs defaultValue="profile" className="w-full">
