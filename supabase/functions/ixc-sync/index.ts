@@ -301,23 +301,32 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          // Build blocked set
+          // Build blocked set from cliente_bloqueado endpoint
           const blockedIds = new Set(blockedData.map((b: any) => String(b.id_cliente)));
           console.log(`Blocked clients from cliente_bloqueado: ${blockedIds.size}`);
 
-          // Build contract map
-          const contractMap = new Map<string, { active: boolean; blocked: boolean }>();
+          // Build contract map - track blocked status per client across ALL contracts
+          const contractMap = new Map<string, { active: boolean; blocked: boolean; hasAnyContract: boolean }>();
           for (const c of contracts) {
             const cid = String(c.id_cliente);
             const isContractActive = c.status === 'A';
-            const isBlocked = blockedIds.has(cid) || 
-              (isContractActive && c.status_internet && c.status_internet !== 'A');
+            // A client is blocked if they have an active contract but internet is not active
+            const isContractBlocked = isContractActive && c.status_internet && c.status_internet !== 'A';
             
             const existing = contractMap.get(cid);
-            if (!existing || isContractActive) {
+            if (!existing) {
               contractMap.set(cid, {
                 active: isContractActive,
-                blocked: isBlocked || (existing?.blocked ?? false),
+                blocked: isContractBlocked || blockedIds.has(cid),
+                hasAnyContract: true,
+              });
+            } else {
+              // Merge: if ANY contract is active, client has active contract
+              // If ANY contract is blocked, client is blocked
+              contractMap.set(cid, {
+                active: existing.active || isContractActive,
+                blocked: existing.blocked || isContractBlocked,
+                hasAnyContract: true,
               });
             }
           }
@@ -404,16 +413,30 @@ Deno.serve(async (req) => {
             let isActive = true;
             let status = 'active';
 
-            if (contract?.blocked || blockedIds.has(clientIdStr)) {
+            // PRIORITY 1: Blocked (from any source) - ABSOLUTE PRIORITY
+            // Sources: cliente_bloqueado endpoint, contract status_internet, client.bloqueado field
+            const isBlockedFromEndpoint = blockedIds.has(clientIdStr);
+            const isBlockedFromContract = contract?.blocked ?? false;
+            const isBlockedFromClient = client.bloqueado === 'S';
+            const isBlocked = isBlockedFromEndpoint || isBlockedFromContract || isBlockedFromClient;
+
+            if (isBlocked) {
+              // Blocked = is_active false + status 'active' (NOT archived)
               isActive = false;
               status = 'active';
               blockedCount++;
             } else if (!isClientActive) {
-              status = 'archived';
+              // PRIORITY 2: Client inactive in IXC (ativo != 'S')
               isActive = false;
-            } else if (contract) {
-              isActive = contract.active;
-              status = contract.active ? 'active' : 'archived';
+              status = 'archived';
+            } else if (contract && !contract.active) {
+              // PRIORITY 3: Client active but all contracts inactive
+              isActive = false;
+              status = 'archived';
+            } else {
+              // PRIORITY 4: Active client
+              isActive = true;
+              status = 'active';
             }
 
             const existing = existingMap.get(clientIdStr);
