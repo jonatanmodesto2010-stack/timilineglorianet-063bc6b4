@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const ITEMS_PER_PAGE = 30;
 
 const Clients = () => {
+  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [allTimelines, setAllTimelines] = useState<ClientTimeline[]>([]);
   const [overdueDaysMap, setOverdueDaysMap] = useState<Map<string, number>>(new Map());
