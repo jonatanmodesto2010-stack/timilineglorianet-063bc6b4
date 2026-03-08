@@ -519,7 +519,7 @@ export const ClientDashboardModal = ({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {boletos.map((boleto, index) => {
+                      {[...boletos].sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime()).map((boleto, index) => {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         const dueDate = new Date(boleto.due_date);
