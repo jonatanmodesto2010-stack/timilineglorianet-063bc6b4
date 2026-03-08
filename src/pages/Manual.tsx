@@ -415,10 +415,10 @@ const Manual = () => {
                 <h4>Histórico de Análises:</h4>
                 <p>Todas as análises ficam salvas no histórico do cliente, permitindo acompanhar a evolução do risco ao longo do tempo.</p>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* CONFIGURAÇÕES - ADMIN */}
-            {canManageSettings && (
+            {isVisible('configuracoes') && (
               <AccordionItem value="configuracoes" className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-2">
