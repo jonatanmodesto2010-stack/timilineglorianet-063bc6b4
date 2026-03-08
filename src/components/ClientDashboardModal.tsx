@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Check, Calendar, DollarSign, Tag as TagIcon, User, Clock, Plus, Trash2, TrendingUp } from 'lucide-react';
+import { X, Check, Calendar, DollarSign, Tag as TagIcon, User, Clock, Plus, Trash2, TrendingUp, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
