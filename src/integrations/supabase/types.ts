@@ -970,15 +970,27 @@ export type Database = {
         }
         Returns: undefined
       }
-      batch_upsert_clients: {
-        Args: {
-          p_active: boolean[]
-          p_ids: string[]
-          p_names: string[]
-          p_statuses: string[]
-        }
-        Returns: undefined
-      }
+      batch_upsert_clients:
+        | {
+            Args: {
+              p_active: boolean[]
+              p_ids: string[]
+              p_names: string[]
+              p_statuses: string[]
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_active: boolean[]
+              p_filial_ids?: string[]
+              p_filial_names?: string[]
+              p_ids: string[]
+              p_names: string[]
+              p_statuses: string[]
+            }
+            Returns: undefined
+          }
       check_org_client_limit: { Args: { _org_id: string }; Returns: boolean }
       check_org_user_limit: { Args: { _org_id: string }; Returns: boolean }
       generate_client_sequential_id: {
