@@ -155,6 +155,44 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Diagnostic action to understand blocked clients
+    if (action === 'diagnose_blocked') {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supa = createClient(supabaseUrl, supabaseKey);
+      const org_id = body.organization_id;
+      const { data: int } = await supa.from('organization_integrations').select('api_url, api_token').eq('organization_id', org_id).eq('integration_type', 'ixc').single();
+      if (!int) return new Response(JSON.stringify({ error: 'No integration found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const token = encodeIxcToken(int.api_token);
+      const results: any = {};
+
+      // 1. Try cliente_bloqueado
+      try {
+        const { registros, total } = await ixcRequest(int.api_url, token, 'cliente_bloqueado', 1, 5);
+        results.cliente_bloqueado = { total, sample: registros.slice(0, 2) };
+      } catch (e: any) { results.cliente_bloqueado = { error: e.message }; }
+
+      // 2. Check contracts with status_internet
+      try {
+        const { registros, total } = await ixcRequest(int.api_url, token, 'cliente_contrato', 1, 10);
+        results.contracts = { total, sample: registros.slice(0, 3).map((r: any) => ({ id: r.id, id_cliente: r.id_cliente, status: r.status, status_internet: r.status_internet, bloqueado: r.bloqueado })) };
+      } catch (e: any) { results.contracts = { error: e.message }; }
+
+      // 3. Check client fields
+      try {
+        const { registros } = await ixcRequest(int.api_url, token, 'cliente', 1, 3);
+        results.client_fields = registros.map((r: any) => {
+          const picked: any = { id: r.id, razao: r.razao, ativo: r.ativo };
+          for (const k of Object.keys(r)) {
+            if (k.includes('bloq') || k.includes('status') || k.includes('acesso') || k.includes('suspen')) picked[k] = r[k];
+          }
+          return picked;
+        });
+      } catch (e: any) { results.client_fields = { error: e.message }; }
+
+      return new Response(JSON.stringify(results), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Full sync or boleto sync
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
