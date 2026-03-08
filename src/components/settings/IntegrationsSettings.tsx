@@ -373,7 +373,6 @@ export const IntegrationsSettings = () => {
           )}
         </div>
       </div>
-    </div>
 
       {integration && <SyncHistory />}
     </div>
