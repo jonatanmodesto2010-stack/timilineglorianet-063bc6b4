@@ -315,10 +315,10 @@ const Manual = () => {
                   <li><strong>Dados de cobrança:</strong> Acompanhe a evolução das ações realizadas</li>
                 </ul>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* ACORDOS */}
-            <AccordionItem value="acordos" className="border rounded-lg px-4">
+            {isVisible('acordos') && <AccordionItem value="acordos" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary" />
