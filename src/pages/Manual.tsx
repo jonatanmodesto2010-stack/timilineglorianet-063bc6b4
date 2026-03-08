@@ -296,10 +296,10 @@ const Manual = () => {
                 <h4>Filtros de Data:</h4>
                 <p>Use os filtros de período para analisar dados de intervalos específicos (hoje, esta semana, este mês, período personalizado).</p>
               </AccordionContent>
-            </AccordionItem>
+            </AccordionItem>}
 
             {/* RELATÓRIOS */}
-            <AccordionItem value="relatorios" className="border rounded-lg px-4">
+            {isVisible('relatorios') && <AccordionItem value="relatorios" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
