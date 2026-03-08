@@ -355,7 +355,7 @@ const Clients = () => {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {/* Overdue Days Badge */}
                             {info.overdueDays > 0 && (
-                              <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${info.isBlocked ? 'bg-red-500 text-white' : info.isOverdue ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'}`}>
                                 {info.overdueDays}d
                               </div>
                             )}
