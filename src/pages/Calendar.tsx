@@ -180,7 +180,7 @@ const Calendar = () => {
           
           const { data: eventsData, error: eventsError } = await supabaseClient
             .from('timeline_events')
-            .select('*')
+            .select('id, event_date, event_time, description, status, icon, line_id')
             .in('line_id', lineIds);
 
           if (eventsError) throw eventsError;

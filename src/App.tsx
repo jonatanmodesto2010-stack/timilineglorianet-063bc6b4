@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,43 +6,60 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useVersionCheck } from "./hooks/useVersionCheck";
-import Index from "./pages/Index";
-import Clients from "./pages/Clients";
-import Calendar from "./pages/Calendar";
-import Dashboard from "./pages/Dashboard";
-import Auth from "./pages/Auth";
-import Settings from "./pages/Settings";
-import Profile from "./pages/Profile";
-import VisualTimeline from "./pages/VisualTimeline";
-import NotFound from "./pages/NotFound";
-import Reports from "./pages/Reports";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminOrganizations from "./pages/admin/AdminOrganizations";
-import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
+import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+// Lazy load all pages
+const Clients = React.lazy(() => import("./pages/Clients"));
+const Calendar = React.lazy(() => import("./pages/Calendar"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Auth = React.lazy(() => import("./pages/Auth"));
+const Settings = React.lazy(() => import("./pages/Settings"));
+const Profile = React.lazy(() => import("./pages/Profile"));
+const VisualTimeline = React.lazy(() => import("./pages/VisualTimeline"));
+const Reports = React.lazy(() => import("./pages/Reports"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminOrganizations = React.lazy(() => import("./pages/admin/AdminOrganizations"));
+const AdminOrganizationDetail = React.lazy(() => import("./pages/admin/AdminOrganizationDetail"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
 
 const AppContent = () => {
   useVersionCheck();
   
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Clients />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/visual-timeline" element={<VisualTimeline />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/organizations" element={<AdminOrganizations />} />
-        <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Clients />} />
+          <Route path="/clients" element={<Clients />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/visual-timeline" element={<VisualTimeline />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/organizations" element={<AdminOrganizations />} />
+          <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };

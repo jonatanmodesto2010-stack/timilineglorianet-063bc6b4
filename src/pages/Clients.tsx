@@ -419,12 +419,12 @@ const Clients = () => {
                               <TrendingUp className="w-4 h-4" />
                             </Button>
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
                 )}
-              </motion.div>
+              </div>
             </div>
 
             {/* Right Column - Widgets */}

@@ -177,7 +177,7 @@ export const ClientDashboardModal = ({
 
         const { data: events, error: eventsError } = await supabase
           .from('timeline_events')
-          .select('*')
+          .select('id, event_date, event_time, description, status, icon, line_id, event_order, position')
           .in('line_id', lineIds)
           .order('event_date', { ascending: false });
 
