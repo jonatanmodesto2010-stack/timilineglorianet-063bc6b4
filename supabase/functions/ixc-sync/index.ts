@@ -400,6 +400,11 @@ Deno.serve(async (req) => {
           const updateFilialNames: string[] = [];
 
           let blockedCount = 0;
+          let blockedFromEndpointCount = 0;
+          let blockedFromContractCount = 0;
+          let blockedFromClientFieldCount = 0;
+          let archivedCount = 0;
+          let activeCount = 0;
 
           for (const client of clients) {
             const clientIdStr = String(client.id);
@@ -414,29 +419,33 @@ Deno.serve(async (req) => {
             let status = 'active';
 
             // PRIORITY 1: Blocked (from any source) - ABSOLUTE PRIORITY
-            // Sources: cliente_bloqueado endpoint, contract status_internet, client.bloqueado field
             const isBlockedFromEndpoint = blockedIds.has(clientIdStr);
             const isBlockedFromContract = contract?.blocked ?? false;
             const isBlockedFromClient = client.bloqueado === 'S';
             const isBlocked = isBlockedFromEndpoint || isBlockedFromContract || isBlockedFromClient;
 
             if (isBlocked) {
-              // Blocked = is_active false + status 'active' (NOT archived)
               isActive = false;
               status = 'active';
               blockedCount++;
+              if (isBlockedFromEndpoint) blockedFromEndpointCount++;
+              if (isBlockedFromContract) blockedFromContractCount++;
+              if (isBlockedFromClient) blockedFromClientFieldCount++;
             } else if (!isClientActive) {
               // PRIORITY 2: Client inactive in IXC (ativo != 'S')
               isActive = false;
               status = 'archived';
+              archivedCount++;
             } else if (contract && !contract.active) {
               // PRIORITY 3: Client active but all contracts inactive
               isActive = false;
               status = 'archived';
+              archivedCount++;
             } else {
               // PRIORITY 4: Active client
               isActive = true;
               status = 'active';
+              activeCount++;
             }
 
             const existing = existingMap.get(clientIdStr);
@@ -464,7 +473,8 @@ Deno.serve(async (req) => {
             }
           }
 
-          console.log(`Status summary: ${blockedCount} blocked, ${toInsert.length} to insert, ${updateIds.length} to update`);
+          console.log(`[sync] Classification: ${activeCount} active, ${blockedCount} blocked (endpoint: ${blockedFromEndpointCount}, contract: ${blockedFromContractCount}, client_field: ${blockedFromClientFieldCount}), ${archivedCount} archived`);
+          console.log(`[sync] DB changes: ${toInsert.length} to insert, ${updateIds.length} to update`);
 
           // Batch insert
           if (toInsert.length > 0) {
