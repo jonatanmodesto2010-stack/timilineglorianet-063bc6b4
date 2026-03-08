@@ -1,12 +1,15 @@
-import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen, CheckCircle2, Zap } from 'lucide-react';
+import { Calendar, Settings, Users, LayoutDashboard, BarChart3, Shield, BookOpen, CheckCircle2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_NAME, APP_VERSION, BUILD_VERSION } from '@/config/version';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Badge } from '@/components/ui/badge';
+import logoIcon from '@/assets/logo-icon.png';
+import logo from '@/assets/logo.png';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
