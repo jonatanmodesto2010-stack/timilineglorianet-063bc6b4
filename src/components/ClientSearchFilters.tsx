@@ -331,16 +331,15 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
           {filters.tagsFilter.length > 0 && (
             <Badge variant="secondary" className="gap-1">
               {filters.tagsFilter.length} tag(s)
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ tagsFilter: [] });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ tagsFilter: [] })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ tagsFilter: [] })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {(filters.dateFrom || filters.dateTo) && (
