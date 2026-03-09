@@ -345,16 +345,15 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
           {(filters.dateFrom || filters.dateTo) && (
             <Badge variant="secondary" className="gap-1">
               Cadastro: {filters.dateFrom || '...'} até {filters.dateTo || '...'}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ dateFrom: '', dateTo: '' });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ dateFrom: '', dateTo: '' })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ dateFrom: '', dateTo: '' })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {(filters.updateDateFrom || filters.updateDateTo) && (
