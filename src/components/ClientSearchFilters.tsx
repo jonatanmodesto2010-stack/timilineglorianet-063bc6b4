@@ -317,10 +317,16 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                 filters.statusFilter === 'inactive' ? 'Inativos' :
                 filters.statusFilter === 'completed' ? 'Finalizados' : filters.statusFilter
               }
-              <X
-                className="w-3 h-3 cursor-pointer"
-                onClick={() => applyFilters({ statusFilter: 'all' })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ statusFilter: 'all' });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
           {filters.tagsFilter.length > 0 && (
