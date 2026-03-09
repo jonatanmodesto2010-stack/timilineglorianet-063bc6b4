@@ -309,7 +309,7 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
       {activeFiltersCount > 0 && (
         <div className="flex flex-wrap gap-2">
           {filters.statusFilter !== 'all' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 pr-1">
               Status: {
                 filters.statusFilter === 'active' ? 'Ativos' :
                 filters.statusFilter === 'blocked' ? 'Bloqueados' :
@@ -317,15 +317,10 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                 filters.statusFilter === 'inactive' ? 'Inativos' :
                 filters.statusFilter === 'completed' ? 'Finalizados' : filters.statusFilter
               }
-              <span
-                role="button"
-                tabIndex={0}
+              <X 
+                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => applyFilters({ statusFilter: 'all' })}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ statusFilter: 'all' })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
-              >
-                <X className="w-3 h-3 pointer-events-none" />
-              </span>
+              />
             </Badge>
           )}
           {filters.tagsFilter.length > 0 && (
