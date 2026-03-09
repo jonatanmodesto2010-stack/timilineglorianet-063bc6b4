@@ -309,7 +309,7 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
       {activeFiltersCount > 0 && (
         <div className="flex flex-wrap gap-2">
           {filters.statusFilter !== 'all' && (
-            <Badge variant="secondary" className="gap-1 pr-1">
+            <Badge variant="secondary" className="gap-1">
               Status: {
                 filters.statusFilter === 'active' ? 'Ativos' :
                 filters.statusFilter === 'blocked' ? 'Bloqueados' :
@@ -317,66 +317,66 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                 filters.statusFilter === 'inactive' ? 'Inativos' :
                 filters.statusFilter === 'completed' ? 'Finalizados' : filters.statusFilter
               }
-              <X 
-                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
+              <X
+                className="w-3 h-3 cursor-pointer"
                 onClick={() => applyFilters({ statusFilter: 'all' })}
               />
             </Badge>
           )}
           {filters.tagsFilter.length > 0 && (
-            <Badge variant="secondary" className="gap-1 pr-1">
+            <Badge variant="secondary" className="gap-1">
               {filters.tagsFilter.length} tag(s)
-              <X 
-                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
+              <X
+                className="w-3 h-3 cursor-pointer"
                 onClick={() => applyFilters({ tagsFilter: [] })}
               />
             </Badge>
           )}
           {(filters.dateFrom || filters.dateTo) && (
-            <Badge variant="secondary" className="gap-1 pr-1">
+            <Badge variant="secondary" className="gap-1">
               Cadastro: {filters.dateFrom || '...'} até {filters.dateTo || '...'}
-              <X 
-                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
+              <X
+                className="w-3 h-3 cursor-pointer"
                 onClick={() => applyFilters({ dateFrom: '', dateTo: '' })}
               />
             </Badge>
           )}
           {(filters.updateDateFrom || filters.updateDateTo) && (
-            <Badge variant="secondary" className="gap-1 pr-1">
+            <Badge variant="secondary" className="gap-1">
               Atualização: {filters.updateDateFrom || '...'} até {filters.updateDateTo || '...'}
-              <X 
-                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
+              <X
+                className="w-3 h-3 cursor-pointer"
                 onClick={() => applyFilters({ updateDateFrom: '', updateDateTo: '' })}
               />
             </Badge>
           )}
           {filters.boletoFilter !== 'all' && (
-            <Badge variant="secondary" className="gap-1 pr-1">
+            <Badge variant="secondary" className="gap-1">
               Boletos
-              <X 
-                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
+              <X
+                className="w-3 h-3 cursor-pointer"
                 onClick={() => applyFilters({ boletoFilter: 'all' })}
               />
             </Badge>
           )}
           {filters.timelineFilter !== 'all' && (
-            <Badge variant="secondary" className="gap-1 pr-1">
+            <Badge variant="secondary" className="gap-1">
               Timeline
-              <X 
-                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
+              <X
+                className="w-3 h-3 cursor-pointer"
                 onClick={() => applyFilters({ timelineFilter: 'all' })}
               />
             </Badge>
           )}
           {filters.iconsFilter.length > 0 && (
-            <Badge variant="secondary" className="gap-1 pr-1 flex items-center">
+            <Badge variant="secondary" className="gap-1 flex items-center">
               <span className="flex items-center gap-1">
                 {filters.iconsFilter.map(icon => (
                   <span key={icon}>{icon}</span>
                 ))}
               </span>
-              <X 
-                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
+              <X
+                className="w-3 h-3 cursor-pointer ml-1"
                 onClick={() => applyFilters({ iconsFilter: [] })}
               />
             </Badge>
