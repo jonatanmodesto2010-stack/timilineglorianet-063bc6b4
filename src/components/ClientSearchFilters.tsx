@@ -317,91 +317,85 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                 filters.statusFilter === 'inactive' ? 'Inativos' :
                 filters.statusFilter === 'completed' ? 'Finalizados' : filters.statusFilter
               }
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ statusFilter: 'all' });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ statusFilter: 'all' })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ statusFilter: 'all' })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {filters.tagsFilter.length > 0 && (
             <Badge variant="secondary" className="gap-1">
               {filters.tagsFilter.length} tag(s)
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ tagsFilter: [] });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ tagsFilter: [] })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ tagsFilter: [] })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {(filters.dateFrom || filters.dateTo) && (
             <Badge variant="secondary" className="gap-1">
               Cadastro: {filters.dateFrom || '...'} até {filters.dateTo || '...'}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ dateFrom: '', dateTo: '' });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ dateFrom: '', dateTo: '' })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ dateFrom: '', dateTo: '' })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {(filters.updateDateFrom || filters.updateDateTo) && (
             <Badge variant="secondary" className="gap-1">
               Atualização: {filters.updateDateFrom || '...'} até {filters.updateDateTo || '...'}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ updateDateFrom: '', updateDateTo: '' });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ updateDateFrom: '', updateDateTo: '' })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ updateDateFrom: '', updateDateTo: '' })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {filters.boletoFilter !== 'all' && (
             <Badge variant="secondary" className="gap-1">
               Boletos
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ boletoFilter: 'all' });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ boletoFilter: 'all' })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ boletoFilter: 'all' })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {filters.timelineFilter !== 'all' && (
             <Badge variant="secondary" className="gap-1">
               Timeline
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ timelineFilter: 'all' });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ timelineFilter: 'all' })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ timelineFilter: 'all' })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {filters.iconsFilter.length > 0 && (
@@ -411,16 +405,15 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                   <span key={icon}>{icon}</span>
                 ))}
               </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ iconsFilter: [] });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ iconsFilter: [] })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ iconsFilter: [] })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
         </div>
