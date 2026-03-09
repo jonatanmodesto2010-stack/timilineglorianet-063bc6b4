@@ -317,55 +317,91 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                 filters.statusFilter === 'inactive' ? 'Inativos' :
                 filters.statusFilter === 'completed' ? 'Finalizados' : filters.statusFilter
               }
-              <X
-                className="w-3 h-3 cursor-pointer"
-                onClick={() => applyFilters({ statusFilter: 'all' })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ statusFilter: 'all' });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
           {filters.tagsFilter.length > 0 && (
             <Badge variant="secondary" className="gap-1">
               {filters.tagsFilter.length} tag(s)
-              <X
-                className="w-3 h-3 cursor-pointer"
-                onClick={() => applyFilters({ tagsFilter: [] })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ tagsFilter: [] });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
           {(filters.dateFrom || filters.dateTo) && (
             <Badge variant="secondary" className="gap-1">
               Cadastro: {filters.dateFrom || '...'} até {filters.dateTo || '...'}
-              <X
-                className="w-3 h-3 cursor-pointer"
-                onClick={() => applyFilters({ dateFrom: '', dateTo: '' })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ dateFrom: '', dateTo: '' });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
           {(filters.updateDateFrom || filters.updateDateTo) && (
             <Badge variant="secondary" className="gap-1">
               Atualização: {filters.updateDateFrom || '...'} até {filters.updateDateTo || '...'}
-              <X
-                className="w-3 h-3 cursor-pointer"
-                onClick={() => applyFilters({ updateDateFrom: '', updateDateTo: '' })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ updateDateFrom: '', updateDateTo: '' });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
           {filters.boletoFilter !== 'all' && (
             <Badge variant="secondary" className="gap-1">
               Boletos
-              <X
-                className="w-3 h-3 cursor-pointer"
-                onClick={() => applyFilters({ boletoFilter: 'all' })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ boletoFilter: 'all' });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
           {filters.timelineFilter !== 'all' && (
             <Badge variant="secondary" className="gap-1">
               Timeline
-              <X
-                className="w-3 h-3 cursor-pointer"
-                onClick={() => applyFilters({ timelineFilter: 'all' })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ timelineFilter: 'all' });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
           {filters.iconsFilter.length > 0 && (
@@ -375,10 +411,16 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
                   <span key={icon}>{icon}</span>
                 ))}
               </span>
-              <X
-                className="w-3 h-3 cursor-pointer ml-1"
-                onClick={() => applyFilters({ iconsFilter: [] })}
-              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters({ iconsFilter: [] });
+                }}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </Badge>
           )}
         </div>
