@@ -324,91 +324,61 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
             </Badge>
           )}
           {filters.tagsFilter.length > 0 && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 pr-1">
               {filters.tagsFilter.length} tag(s)
-              <span
-                role="button"
-                tabIndex={0}
+              <X 
+                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => applyFilters({ tagsFilter: [] })}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ tagsFilter: [] })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
-              >
-                <X className="w-3 h-3 pointer-events-none" />
-              </span>
+              />
             </Badge>
           )}
           {(filters.dateFrom || filters.dateTo) && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 pr-1">
               Cadastro: {filters.dateFrom || '...'} até {filters.dateTo || '...'}
-              <span
-                role="button"
-                tabIndex={0}
+              <X 
+                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => applyFilters({ dateFrom: '', dateTo: '' })}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ dateFrom: '', dateTo: '' })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
-              >
-                <X className="w-3 h-3 pointer-events-none" />
-              </span>
+              />
             </Badge>
           )}
           {(filters.updateDateFrom || filters.updateDateTo) && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 pr-1">
               Atualização: {filters.updateDateFrom || '...'} até {filters.updateDateTo || '...'}
-              <span
-                role="button"
-                tabIndex={0}
+              <X 
+                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => applyFilters({ updateDateFrom: '', updateDateTo: '' })}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ updateDateFrom: '', updateDateTo: '' })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
-              >
-                <X className="w-3 h-3 pointer-events-none" />
-              </span>
+              />
             </Badge>
           )}
           {filters.boletoFilter !== 'all' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 pr-1">
               Boletos
-              <span
-                role="button"
-                tabIndex={0}
+              <X 
+                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => applyFilters({ boletoFilter: 'all' })}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ boletoFilter: 'all' })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
-              >
-                <X className="w-3 h-3 pointer-events-none" />
-              </span>
+              />
             </Badge>
           )}
           {filters.timelineFilter !== 'all' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1 pr-1">
               Timeline
-              <span
-                role="button"
-                tabIndex={0}
+              <X 
+                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => applyFilters({ timelineFilter: 'all' })}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ timelineFilter: 'all' })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
-              >
-                <X className="w-3 h-3 pointer-events-none" />
-              </span>
+              />
             </Badge>
           )}
           {filters.iconsFilter.length > 0 && (
-            <Badge variant="secondary" className="gap-1 flex items-center">
+            <Badge variant="secondary" className="gap-1 pr-1 flex items-center">
               <span className="flex items-center gap-1">
                 {filters.iconsFilter.map(icon => (
                   <span key={icon}>{icon}</span>
                 ))}
               </span>
-              <span
-                role="button"
-                tabIndex={0}
+              <X 
+                className="w-4 h-4 ml-1 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => applyFilters({ iconsFilter: [] })}
-                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ iconsFilter: [] })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
-              >
-                <X className="w-3 h-3 pointer-events-none" />
-              </span>
+              />
             </Badge>
           )}
         </div>
