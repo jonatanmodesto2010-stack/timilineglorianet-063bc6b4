@@ -387,16 +387,15 @@ export const ClientSearchFilters = ({ onFilterChange, organizationId, pageName }
           {filters.timelineFilter !== 'all' && (
             <Badge variant="secondary" className="gap-1">
               Timeline
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  applyFilters({ timelineFilter: 'all' });
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => applyFilters({ timelineFilter: 'all' })}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters({ timelineFilter: 'all' })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-1 cursor-pointer inline-flex items-center justify-center"
               >
-                <X className="w-3 h-3" />
-              </button>
+                <X className="w-3 h-3 pointer-events-none" />
+              </span>
             </Badge>
           )}
           {filters.iconsFilter.length > 0 && (
